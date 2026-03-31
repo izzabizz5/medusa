@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "src",
+  "monorepo": true,
+  "root": "apps/backend",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": false,
+    "tsConfigPath": "apps/backend/tsconfig.app.json"
+  },
+  "projects": {
+    "backend": {
+      "type": "application",
+      "root": "apps/backend",
+      "entryFile": "main",
+      "sourceRoot": "apps/backend/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/backend/tsconfig.app.json"
+      }
+    },
+    "link-management-service": {
+      "type": "application",
+      "root": "apps/link-management-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/link-management-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/link-management-service/tsconfig.app.json"
+      }
+    },
+    "crawling-service": {
+      "type": "application",
+      "root": "apps/crawling-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/crawling-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/crawling-service/tsconfig.app.json"
+      }
+    },
+    "scanning-service": {
+      "type": "application",
+      "root": "apps/scanning-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/scanning-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/scanning-service/tsconfig.app.json"
+      }
+    },
+    "matching-service": {
+      "type": "application",
+      "root": "apps/matching-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/matching-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/matching-service/tsconfig.app.json"
+      }
+    },
+    "shared": {
+      "type": "library",
+      "root": "libs/shared",
+      "entryFile": "index",
+      "sourceRoot": "libs/shared/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/shared/tsconfig.lib.json"
+      }
+    }
+  }
+}

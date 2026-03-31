@@ -1,0 +1,16 @@
+fastapi==0.111.1
+uvicorn[standard]==0.30.1
+insightface==0.7.3
+onnxruntime==1.18.1
+# Once we get GPU switch to this line:
+# onnxruntime-gpu==1.18.1
+opencv-python-headless==4.10.0.84
+Pillow==10.4.0
+numpy==1.26.4
+boto3==1.34.144
+python-dotenv==1.0.1
+httpx==0.27.0
+deepface==0.0.93
+tf-keras==2.16.0
+# DeepFace secondary validation (optional - comment out to save memory)
+# tensorflow==2.16.2

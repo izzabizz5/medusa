@@ -1,0 +1,18 @@
+{
+  "name": "@medusa/gpu-orchestrator",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "ts-node orchestrator.ts"
+  },
+  "dependencies": {
+    "axios": "^1.7.2",
+    "bullmq": "^5.12.7",
+    "ioredis": "^5.4.1"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5",
+    "@types/node": "^22.0.0"
+  }
+}

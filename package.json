@@ -1,0 +1,28 @@
+{
+  "name": "medusa",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "libs/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev:backend": "npm run start:dev --workspace=apps/backend",
+    "dev:link-management": "npm run start:dev --workspace=apps/link-management-service",
+    "dev:crawling": "npm run start:dev --workspace=apps/crawling-service",
+    "dev:scanning": "npm run start:dev --workspace=apps/scanning-service",
+    "dev:matching": "npm run start:dev --workspace=apps/matching-service",
+    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f",
+    "typeorm": "npm run typeorm --workspace=apps/backend",
+    "migration:generate": "npm run migration:generate --workspace=apps/backend",
+    "migration:run": "npm run migration:run --workspace=apps/backend"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.4.5"
+  }
+}
