@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Medusa — Brand Kit</title>
+
+  <!-- Font Kit 1: Nocturnal Bloom -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,300;1,400;1,700&family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,400;1,9..144,700&family=Outfit:wght@300;400;500;600&family=Bebas+Neue&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&display=swap" rel="stylesheet">
+
+  <style>
+    /* ─────────────────────────────────────────────────
+       COLOR SYSTEM — extracted from Flower Gradients
+    ───────────────────────────────────────────────── */
+    :root {
+      /* Darks */
+      --void:        #0d1614;
+      --deep:        #1b3422;
+
+      /* Greens */
+      --moss:        #3d6b38;
+      --lime:        #8fc832;
+      --chartreuse:  #b8e040;
+
+      /* Warms */
+      --cream:       #ede5cf;
+      --blush:       #ddb8b8;
+      --coral:       #d96858;
+
+      /* Cools */
+      --lavender:    #b8a8cc;
+      --violet:      #7b6898;
+
+      /* Accents */
+      --amber:       #e89828;
+      --gold:        #f0c040;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--void);
+      color: var(--cream);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* ─── Layout ─── */
+    .page { max-width: 1200px; margin: 0 auto; padding: 80px 40px; }
+
+    .section { margin-bottom: 100px; }
+
+    .section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin-bottom: 32px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, var(--lime) 0%, transparent 100%);
+      opacity: 0.3;
+    }
+
+    h1, h2, h3 { line-height: 1.1; }
+
+    /* ─── Hero ─── */
+    .hero {
+      padding: 80px 0 120px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      margin-bottom: 100px;
+    }
+    .hero-eyebrow {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--lavender);
+      margin-bottom: 24px;
+    }
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(64px, 10vw, 128px);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--cream);
+      line-height: 0.95;
+      margin-bottom: 32px;
+    }
+    .hero-title span { color: var(--lime); font-style: italic; }
+    .hero-sub {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px;
+      font-weight: 300;
+      color: var(--blush);
+      max-width: 480px;
+    }
+
+    /* ─── Color Palette ─── */
+    .palette-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .swatch {
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    .swatch-color {
+      height: 100px;
+      position: relative;
+    }
+    .swatch-info {
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.03);
+    }
+    .swatch-name {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--cream);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    .swatch-hex {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--lavender);
+    }
+    .swatch-role {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      margin-top: 4px;
+    }
+
+    /* ─── Font Pairings ─── */
+    .font-kits { display: flex; flex-direction: column; gap: 48px; }
+
+    .font-kit {
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .font-kit:hover { border-color: rgba(184, 168, 204, 0.3); }
+
+    .kit-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 28px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .kit-number {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--lime);
+      letter-spacing: 0.2em;
+    }
+    .kit-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--cream);
+      letter-spacing: 0.05em;
+    }
+    .kit-vibe {
+      font-size: 12px;
+      color: var(--lavender);
+      font-style: italic;
+    }
+
+    .kit-preview {
+      padding: 40px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kit-fonts-used {
+      display: flex;
+      gap: 32px;
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .font-pill {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      color: var(--lavender);
+      background: rgba(184, 168, 204, 0.08);
+      padding: 4px 12px;
+      border-radius: 2px;
+    }
+
+    /* Kit 1 — Nocturnal Bloom */
+    .k1-display {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(52px, 7vw, 96px);
+      font-weight: 700;
+      line-height: 1;
+      color: var(--cream);
+      letter-spacing: -0.02em;
+    }
+    .k1-display em { color: var(--coral); font-style: italic; }
+    .k1-body {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--blush);
+      margin-top: 16px;
+      max-width: 500px;
+      line-height: 1.7;
+    }
+    .k1-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin-bottom: 12px;
+    }
+
+    /* Kit 2 — Frequency */
+    .k2-display {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(52px, 7vw, 88px);
+      font-weight: 800;
+      line-height: 0.95;
+      color: var(--cream);
+      letter-spacing: -0.03em;
+    }
+    .k2-accent { color: var(--chartreuse); }
+    .k2-body {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      font-weight: 400;
+      color: var(--lavender);
+      margin-top: 20px;
+      max-width: 500px;
+      line-height: 1.8;
+    }
+    .k2-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 12px;
+    }
+
+    /* Kit 3 — Organic Matter */
+    .k3-display {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(52px, 7vw, 92px);
+      font-weight: 900;
+      font-optical-sizing: auto;
+      line-height: 1;
+      color: var(--cream);
+      letter-spacing: -0.02em;
+    }
+    .k3-accent { color: var(--amber); font-style: italic; font-weight: 400; }
+    .k3-body {
+      font-family: 'Outfit', sans-serif;
+      font-size: 16px;
+      font-weight: 300;
+      color: var(--blush);
+      margin-top: 16px;
+      max-width: 480px;
+      line-height: 1.75;
+    }
+    .k3-label {
+      font-family: 'Outfit', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--moss);
+      margin-bottom: 12px;
+    }
+
+    /* Kit 4 — Neon Relic */
+    .k4-display {
+      font-family: 'Bebas Neue', cursive;
+      font-size: clamp(64px, 9vw, 112px);
+      font-weight: 400;
+      line-height: 0.9;
+      color: var(--cream);
+      letter-spacing: 0.04em;
+    }
+    .k4-accent { color: var(--coral); }
+    .k4-body {
+      font-family: 'Libre Baskerville', serif;
+      font-size: 15px;
+      font-style: italic;
+      font-weight: 400;
+      color: var(--blush);
+      margin-top: 20px;
+      max-width: 480px;
+      line-height: 1.75;
+    }
+    .k4-label {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 13px;
+      letter-spacing: 0.3em;
+      color: var(--amber);
+      margin-bottom: 12px;
+    }
+
+    /* Kit 5 — Gradient Dream */
+    .k5-display {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(52px, 7vw, 100px);
+      font-weight: 900;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--cream) 0%, var(--blush) 40%, var(--lavender) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.02em;
+    }
+    .k5-body {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--blush);
+      margin-top: 16px;
+      max-width: 500px;
+      line-height: 1.7;
+    }
+    .k5-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--violet);
+      margin-bottom: 12px;
+    }
+
+    /* ─── Components ─── */
+    .component-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .component-block {
+      background: rgba(255,255,255,0.025);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 8px;
+      padding: 32px;
+    }
+    .component-block.full { grid-column: 1 / -1; }
+    .component-title {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin-bottom: 24px;
+      opacity: 0.7;
+    }
+
+    /* Buttons */
+    .btn-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 12px 24px;
+      border-radius: 3px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+    .btn-primary {
+      background: var(--lime);
+      color: var(--void);
+    }
+    .btn-primary:hover { background: var(--chartreuse); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--cream);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .btn-ghost:hover { border-color: var(--lavender); color: var(--lavender); }
+
+    .btn-coral {
+      background: var(--coral);
+      color: var(--cream);
+    }
+    .btn-coral:hover { background: #e07060; }
+
+    .btn-outline-lime {
+      background: transparent;
+      color: var(--lime);
+      border: 1px solid var(--lime);
+    }
+    .btn-outline-lime:hover { background: rgba(143, 200, 50, 0.1); }
+
+    .btn-mono {
+      background: transparent;
+      color: var(--amber);
+      border: 1px solid var(--amber);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+    }
+    .btn-mono:hover { background: rgba(232, 152, 40, 0.1); }
+
+    /* Cards */
+    .card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 6px;
+      padding: 24px;
+      transition: all 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: rgba(184, 168, 204, 0.25);
+      background: rgba(255,255,255,0.045);
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--lavender), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .card:hover::before { opacity: 0.6; }
+
+    .card-tag {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--lime);
+      margin-bottom: 12px;
+    }
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--cream);
+      line-height: 1.1;
+      margin-bottom: 10px;
+    }
+    .card-body {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      color: rgba(237, 229, 207, 0.6);
+      line-height: 1.65;
+    }
+
+    .card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+    /* Input */
+    .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .input-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--lavender);
+    }
+    .input {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      color: var(--cream);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px;
+      padding: 11px 14px;
+      outline: none;
+      transition: border-color 0.15s;
+      width: 100%;
+    }
+    .input::placeholder { color: rgba(237, 229, 207, 0.25); }
+    .input:focus { border-color: var(--lavender); background: rgba(184, 168, 204, 0.06); }
+
+    /* Badge / Tag */
+    .badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .badge {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 2px;
+    }
+    .badge-lime   { background: rgba(143, 200, 50, 0.15);  color: var(--lime);      border: 1px solid rgba(143,200,50,0.3); }
+    .badge-coral  { background: rgba(217, 104, 88, 0.15);  color: var(--coral);     border: 1px solid rgba(217,104,88,0.3); }
+    .badge-violet { background: rgba(123, 104, 152, 0.2);  color: var(--lavender);  border: 1px solid rgba(123,104,152,0.3); }
+    .badge-amber  { background: rgba(232, 152, 40, 0.15);  color: var(--amber);     border: 1px solid rgba(232,152,40,0.3); }
+    .badge-cream  { background: rgba(237, 229, 207, 0.07); color: var(--cream);     border: 1px solid rgba(237,229,207,0.15); }
+
+    /* Noise texture overlay */
+    .noise {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.025;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    }
+
+    /* Hero gradient blob */
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    /* Gradient text utility */
+    .grad-text {
+      background: linear-gradient(135deg, var(--lime), var(--chartreuse), var(--cream));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Stat display */
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(255,255,255,0.06); }
+    .stat-block {
+      background: rgba(13, 22, 20, 1);
+      padding: 28px 24px;
+    }
+    .stat-value {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 56px;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--cream);
+    }
+    .stat-unit { font-size: 28px; color: var(--lime); }
+    .stat-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--lavender);
+      margin-top: 8px;
+    }
+
+    /* Nav preview */
+    .nav-preview {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 28px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 4px;
+    }
+    .nav-logo {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--cream);
+    }
+    .nav-logo span { color: var(--lime); font-style: italic; }
+    .nav-links {
+      display: flex;
+      gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(237, 229, 207, 0.6);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      transition: color 0.15s;
+    }
+    .nav-links a:hover { color: var(--cream); }
+    .nav-links a.active { color: var(--lime); }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07) 30%, rgba(255,255,255,0.07) 70%, transparent);
+      margin: 12px 0;
+    }
+
+    /* Gradient showcase */
+    .gradient-showcase {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    .grad-swatch {
+      height: 180px;
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+    }
+    .grad-swatch-label {
+      position: absolute;
+      bottom: 12px;
+      left: 14px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.7);
+    }
+
+    @media (max-width: 768px) {
+      .component-grid { grid-template-columns: 1fr; }
+      .card-grid { grid-template-columns: 1fr; }
+      .gradient-showcase { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: 1fr; }
+      .page { padding: 40px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Grain overlay -->
+  <div class="noise"></div>
+
+  <div class="page">
+
+    <!-- ─── HERO ─── -->
+    <div class="hero" style="position: relative;">
+      <div class="blob" style="width:600px;height:600px;top:-200px;right:-200px;background:radial-gradient(var(--deep),transparent);"></div>
+      <div class="blob" style="width:300px;height:300px;top:0;left:40%;background:radial-gradient(var(--violet),transparent);opacity:0.12;"></div>
+      <p class="hero-eyebrow">Medusa · Brand System · 2025</p>
+      <h1 class="hero-title">Brand<br/><span>Kit.</span></h1>
+      <p class="hero-sub">Colors, typography, and components — extracted from the Flower Gradients palette, built for something original.</p>
+    </div>
+
+    <!-- ─── COLOR PALETTE ─── -->
+    <section class="section">
+      <p class="section-label">01 — Color System</p>
+
+      <div class="palette-grid">
+        <div class="swatch">
+          <div class="swatch-color" style="background:#0d1614;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Void</div>
+            <div class="swatch-hex">#0d1614</div>
+            <div class="swatch-role">Background / Base</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#1b3422;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Deep</div>
+            <div class="swatch-hex">#1b3422</div>
+            <div class="swatch-role">Surface / Dark card</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#3d6b38;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Moss</div>
+            <div class="swatch-hex">#3d6b38</div>
+            <div class="swatch-role">Mid surface / Border</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#8fc832;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Lime</div>
+            <div class="swatch-hex">#8fc832</div>
+            <div class="swatch-role">Primary accent</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#b8e040;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Chartreuse</div>
+            <div class="swatch-hex">#b8e040</div>
+            <div class="swatch-role">Accent hover / Highlight</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#ede5cf;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Cream</div>
+            <div class="swatch-hex">#ede5cf</div>
+            <div class="swatch-role">Primary text</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#ddb8b8;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Blush</div>
+            <div class="swatch-hex">#ddb8b8</div>
+            <div class="swatch-role">Secondary text / Body</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#b8a8cc;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Lavender</div>
+            <div class="swatch-hex">#b8a8cc</div>
+            <div class="swatch-role">Labels / Muted UI</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#7b6898;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Violet</div>
+            <div class="swatch-hex">#7b6898</div>
+            <div class="swatch-role">Subtle accent</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#d96858;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Coral</div>
+            <div class="swatch-hex">#d96858</div>
+            <div class="swatch-role">Danger / Emphasis</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#e89828;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Amber</div>
+            <div class="swatch-hex">#e89828</div>
+            <div class="swatch-role">Warning / Secondary accent</div>
+          </div>
+        </div>
+        <div class="swatch">
+          <div class="swatch-color" style="background:#f0c040;"></div>
+          <div class="swatch-info">
+            <div class="swatch-name">Gold</div>
+            <div class="swatch-hex">#f0c040</div>
+            <div class="swatch-role">Highlight / Decoration</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gradient combos -->
+      <p class="section-label" style="margin-top: 48px;">Gradient Combos</p>
+      <div class="gradient-showcase">
+        <div class="grad-swatch" style="background: radial-gradient(ellipse at 30% 40%, #8fc832 0%, #1b3422 45%, #0d1614 100%);">
+          <div class="grad-swatch-label">Botanical</div>
+        </div>
+        <div class="grad-swatch" style="background: radial-gradient(ellipse at 60% 30%, #b8a8cc 0%, #7b6898 40%, #0d1614 100%);">
+          <div class="grad-swatch-label">Twilight</div>
+        </div>
+        <div class="grad-swatch" style="background: radial-gradient(ellipse at 50% 60%, #e89828 0%, #d96858 40%, #1b3422 100%);">
+          <div class="grad-swatch-label">Ember</div>
+        </div>
+        <div class="grad-swatch" style="background: linear-gradient(135deg, #0d1614 0%, #1b3422 30%, #3d6b38 60%, #8fc832 100%);">
+          <div class="grad-swatch-label">Forest Depth</div>
+        </div>
+        <div class="grad-swatch" style="background: linear-gradient(135deg, #ddb8b8 0%, #b8a8cc 50%, #7b6898 100%);">
+          <div class="grad-swatch-label" style="color: rgba(0,0,0,0.5);">Petal</div>
+        </div>
+        <div class="grad-swatch" style="background: radial-gradient(ellipse at 20% 80%, #b8e040 0%, #8fc832 25%, #1b3422 60%, #0d1614 100%);">
+          <div class="grad-swatch-label">Night Bloom</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── FONT PAIRINGS ─── -->
+    <section class="section">
+      <p class="section-label">02 — Typography Kits (choose one)</p>
+
+      <div class="font-kits">
+
+        <!-- KIT 1 -->
+        <div class="font-kit">
+          <div class="kit-header">
+            <span class="kit-number">Kit 01</span>
+            <span class="kit-name">NOCTURNAL BLOOM</span>
+            <span class="kit-vibe">Dark editorial — fashion meets brutalism</span>
+          </div>
+          <div class="kit-preview">
+            <div class="k1-label">Space Grotesk — label</div>
+            <div class="k1-display">Cormorant<br/>Garamond <em>Italic</em></div>
+            <div class="k1-body">Space Grotesk — body text, 300–600 weight. Clean geometric sans that balances the ornate display font above.</div>
+            <div class="kit-fonts-used">
+              <span class="font-pill">Display: Cormorant Garamond 700 / Italic</span>
+              <span class="font-pill">Body: Space Grotesk 300–600</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KIT 2 -->
+        <div class="font-kit">
+          <div class="kit-header">
+            <span class="kit-number">Kit 02</span>
+            <span class="kit-name">FREQUENCY</span>
+            <span class="kit-vibe">Alien signal — geometric + monospace machine</span>
+          </div>
+          <div class="kit-preview">
+            <div class="k2-label">IBM Plex Mono — label</div>
+            <div class="k2-display">SYNE<br/><span class="k2-accent">EXTRABOLD</span></div>
+            <div class="k2-body">// IBM Plex Mono — body text, 400 weight.<br/>// Monospace machine feel pairs with Syne's alien geometry.</div>
+            <div class="kit-fonts-used">
+              <span class="font-pill">Display: Syne 800 ExtraBold</span>
+              <span class="font-pill">Body: IBM Plex Mono 400</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KIT 3 -->
+        <div class="font-kit">
+          <div class="kit-header">
+            <span class="kit-number">Kit 03</span>
+            <span class="kit-name">ORGANIC MATTER</span>
+            <span class="kit-vibe">Living, warm — ink-press meets modern clarity</span>
+          </div>
+          <div class="kit-preview">
+            <div class="k3-label">Outfit — label</div>
+            <div class="k3-display">Fraunces<br/><span class="k3-accent">Black Italic</span></div>
+            <div class="k3-body">Outfit — body text, 300–500 weight. Gentle and geometric, lets Fraunces breathe without competing with it.</div>
+            <div class="kit-fonts-used">
+              <span class="font-pill">Display: Fraunces 900 / Italic 400</span>
+              <span class="font-pill">Body: Outfit 300–500</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KIT 4 -->
+        <div class="font-kit">
+          <div class="kit-header">
+            <span class="kit-number">Kit 04</span>
+            <span class="kit-name">NEON RELIC</span>
+            <span class="kit-vibe">Retro-industrial — poster weight meets classical italic</span>
+          </div>
+          <div class="kit-preview">
+            <div class="k4-label">Bebas Neue — label</div>
+            <div class="k4-display">BEBAS<br/><span class="k4-accent">NEUE</span></div>
+            <div class="k4-body"><em>Libre Baskerville Italic — body text, 400 weight. Classical and authoritative, a sharp contrast to the condensed poster headline above.</em></div>
+            <div class="kit-fonts-used">
+              <span class="font-pill">Display: Bebas Neue 400</span>
+              <span class="font-pill">Body: Libre Baskerville Italic 400</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- KIT 5 -->
+        <div class="font-kit">
+          <div class="kit-header">
+            <span class="kit-number">Kit 05</span>
+            <span class="kit-name">GRADIENT DREAM</span>
+            <span class="kit-vibe">Opulent surreal — extreme contrast serif + geometric</span>
+          </div>
+          <div class="kit-preview">
+            <div class="k5-label">Syne — label</div>
+            <div class="k5-display">Playfair<br/>Display Black</div>
+            <div class="k5-body">Syne — body text, 400–700 weight. Geometric and slightly alien, it keeps Playfair's drama grounded without feeling corporate.</div>
+            <div class="kit-fonts-used">
+              <span class="font-pill">Display: Playfair Display 900 / Italic 700</span>
+              <span class="font-pill">Body: Syne 400–700</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ─── COMPONENTS ─── -->
+    <section class="section">
+      <p class="section-label">03 — Components</p>
+
+      <div class="component-grid">
+
+        <!-- Buttons -->
+        <div class="component-block full">
+          <p class="component-title">Buttons</p>
+          <div class="btn-row">
+            <button class="btn btn-primary">Primary action</button>
+            <button class="btn btn-ghost">Secondary</button>
+            <button class="btn btn-coral">Destructive</button>
+            <button class="btn btn-outline-lime">Outline accent</button>
+            <button class="btn btn-mono">→ Scan now</button>
+          </div>
+        </div>
+
+        <!-- Badges -->
+        <div class="component-block">
+          <p class="component-title">Badges &amp; Tags</p>
+          <div class="badge-row">
+            <span class="badge badge-lime">Active</span>
+            <span class="badge badge-coral">Flagged</span>
+            <span class="badge badge-violet">Scanning</span>
+            <span class="badge badge-amber">Warning</span>
+            <span class="badge badge-cream">Archived</span>
+          </div>
+        </div>
+
+        <!-- Inputs -->
+        <div class="component-block">
+          <p class="component-title">Form Input</p>
+          <div class="input-group">
+            <label class="input-label">Target domain</label>
+            <input class="input" type="text" placeholder="https://example.com" />
+          </div>
+          <div class="input-group">
+            <label class="input-label">Scan depth</label>
+            <input class="input" type="text" placeholder="3 levels" />
+          </div>
+        </div>
+
+        <!-- Nav -->
+        <div class="component-block full">
+          <p class="component-title">Navigation</p>
+          <nav class="nav-preview">
+            <div class="nav-logo">med<span>usa</span></div>
+            <ul class="nav-links">
+              <li><a href="#" class="active">Dashboard</a></li>
+              <li><a href="#">Scans</a></li>
+              <li><a href="#">Links</a></li>
+              <li><a href="#">Reports</a></li>
+            </ul>
+            <button class="btn btn-primary" style="padding: 8px 18px; font-size: 12px;">New scan</button>
+          </nav>
+        </div>
+
+        <!-- Cards -->
+        <div class="component-block full">
+          <p class="component-title">Cards</p>
+          <div class="card-grid">
+            <div class="card">
+              <div class="card-tag">Links found</div>
+              <div class="card-title">4,291</div>
+              <div class="card-body">Across 38 unique domains in the last crawl session.</div>
+            </div>
+            <div class="card">
+              <div class="card-tag" style="color: var(--coral);">Flagged</div>
+              <div class="card-title">12</div>
+              <div class="card-body">Broken or redirected links detected. Review pending.</div>
+            </div>
+            <div class="card">
+              <div class="card-tag" style="color: var(--amber);">Health</div>
+              <div class="card-title">99.7%</div>
+              <div class="card-body">Overall link health across all monitored properties.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="component-block full">
+          <p class="component-title">Stat Display</p>
+          <div class="stats-row">
+            <div class="stat-block">
+              <div class="stat-value">4.2<span class="stat-unit">k</span></div>
+              <div class="stat-label">Links tracked</div>
+            </div>
+            <div class="stat-block">
+              <div class="stat-value" style="color: var(--lime);">99<span class="stat-unit">%</span></div>
+              <div class="stat-label">Uptime</div>
+            </div>
+            <div class="stat-block">
+              <div class="stat-value" style="color: var(--coral);">12</div>
+              <div class="stat-label">Alerts active</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ─── HOMEPAGE SECTION PREVIEW ─── -->
+    <section class="section">
+      <p class="section-label">04 — Homepage Section Preview</p>
+
+      <!-- Hero section mock -->
+      <div style="border: 1px solid rgba(255,255,255,0.07); border-radius: 8px; overflow: hidden; position: relative; min-height: 520px; display: flex; align-items: center; padding: 80px 60px;">
+        <!-- Background blobs -->
+        <div style="position:absolute;inset:0;overflow:hidden;pointer-events:none;">
+          <div style="position:absolute;width:500px;height:500px;top:-100px;right:-80px;background:radial-gradient(circle, #1b3422 0%, transparent 70%);opacity:0.8;border-radius:50%;"></div>
+          <div style="position:absolute;width:300px;height:300px;bottom:-80px;left:20%;background:radial-gradient(circle, #7b6898 0%, transparent 70%);opacity:0.2;border-radius:50%;"></div>
+          <div style="position:absolute;width:200px;height:200px;top:30%;right:25%;background:radial-gradient(circle, #8fc832 0%, transparent 70%);opacity:0.12;border-radius:50%;"></div>
+        </div>
+
+        <div style="position:relative; max-width: 640px;">
+          <div style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.3em;text-transform:uppercase;color:var(--lime);margin-bottom:20px;">Link intelligence platform</div>
+          <h1 style="font-family:'Cormorant Garamond',serif;font-size:clamp(52px,6vw,88px);font-weight:700;line-height:1;color:var(--cream);letter-spacing:-0.02em;margin-bottom:24px;">
+            See every<br/><em style="color:var(--blush);">link.</em> Know every<br/>connection.
+          </h1>
+          <p style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:300;color:rgba(237,229,207,0.65);line-height:1.75;margin-bottom:36px;max-width:440px;">
+            Medusa crawls, maps, and monitors your link ecosystem — surfacing what matters before it breaks.
+          </p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;">
+            <button class="btn btn-primary">Start scanning</button>
+            <button class="btn btn-ghost">See how it works →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <div style="padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.06); display:flex; justify-content:space-between; align-items:center;">
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.15em;color:rgba(255,255,255,0.2);">MEDUSA BRAND KIT — 2025</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.15em;color:rgba(255,255,255,0.2);">OPEN IN BROWSER TO VIEW</span>
+    </div>
+
+  </div>
+
+</body>
+</html>
