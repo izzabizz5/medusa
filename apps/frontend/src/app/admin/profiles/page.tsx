@@ -10,6 +10,7 @@ interface Profile {
   email: string;
   fullName: string;
   role: string;
+  sport: string | null;
 }
 
 export default function AdminProfilesPage() {
@@ -18,7 +19,7 @@ export default function AdminProfilesPage() {
   const [loading, setLoading] = useState(true);
   const [switchingId, setSwitchingId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState({ name: '', email: '' });
+  const [form, setForm] = useState({ name: '', sport: '', email: '' });
   const [formError, setFormError] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
@@ -53,8 +54,8 @@ export default function AdminProfilesPage() {
     setFormLoading(true);
     setFormError('');
     try {
-      await adminApi.createProfile({ name: form.name, email: form.email || undefined });
-      setForm({ name: '', email: '' });
+      await adminApi.createProfile({ name: form.name, sport: form.sport || undefined, email: form.email || undefined });
+      setForm({ name: '', sport: '', email: '' });
       setShowAdd(false);
       await load();
     } catch (err: any) {
@@ -122,7 +123,7 @@ export default function AdminProfilesPage() {
               {formError}
             </div>
           )}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '20px' }}>
             <div>
               <label style={labelStyle}>Name</label>
               <input
@@ -131,6 +132,18 @@ export default function AdminProfilesPage() {
                 placeholder="e.g. Jane Smith"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = 'rgba(143,200,50,0.4)')}
+                onBlur={(e) => (e.target.style.borderColor = 'rgba(237,229,207,0.1)')}
+              />
+            </div>
+            <div>
+              <label style={labelStyle}>Sport</label>
+              <input
+                type="text"
+                placeholder="e.g. volleyball, soccer"
+                value={form.sport}
+                onChange={(e) => setForm({ ...form, sport: e.target.value })}
                 style={inputStyle}
                 onFocus={(e) => (e.target.style.borderColor = 'rgba(143,200,50,0.4)')}
                 onBlur={(e) => (e.target.style.borderColor = 'rgba(237,229,207,0.1)')}
@@ -248,6 +261,20 @@ export default function AdminProfilesPage() {
                         }}>
                           {profile.role}
                         </span>
+                        {profile.sport && (
+                          <span style={{
+                            fontFamily: "'IBM Plex Mono', monospace",
+                            fontSize: '8px',
+                            letterSpacing: '0.15em',
+                            textTransform: 'uppercase',
+                            color: '#e89828',
+                            background: 'rgba(232,152,40,0.08)',
+                            padding: '2px 7px',
+                            border: '1px solid rgba(232,152,40,0.2)',
+                          }}>
+                            {profile.sport}
+                          </span>
+                        )}
                       </div>
                       <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', color: 'rgba(237,229,207,0.3)', letterSpacing: '0.06em' }}>
                         {profile.email}

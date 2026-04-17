@@ -12,6 +12,10 @@ class CreateProfileDto {
   name: string;
 
   @IsOptional()
+  @IsString()
+  sport?: string;
+
+  @IsOptional()
   @IsEmail()
   email?: string;
 }
@@ -33,7 +37,7 @@ export class AdminController {
    */
   @Post('users')
   createProfile(@Body() dto: CreateProfileDto) {
-    return this.adminService.createProfile(dto.name, dto.email);
+    return this.adminService.createProfile(dto.name, dto.sport, dto.email);
   }
 
   /**
@@ -70,5 +74,25 @@ export class AdminController {
       );
     }
     return { user: session.user };
+  }
+
+  // ── pipeline triggers ────────────────────────────────────────
+
+  /** Queue crawl jobs for all active target URLs. */
+  @Post('pipeline/crawl')
+  triggerCrawl() {
+    return this.adminService.triggerCrawl();
+  }
+
+  /** Queue a match batch — compares found image embeddings against reference photos. */
+  @Post('pipeline/match')
+  triggerMatch() {
+    return this.adminService.triggerMatchBatch();
+  }
+
+  /** Build search queries from profiles (name + sport) and queue discovery jobs. */
+  @Post('pipeline/discover')
+  triggerDiscover() {
+    return this.adminService.triggerKeywordDiscovery();
   }
 }

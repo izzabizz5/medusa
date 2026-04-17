@@ -32,6 +32,9 @@ export class User {
   @Column({ type: 'varchar', default: UserRole.ATHLETE })
   role: UserRole;
 
+  @Column({ nullable: true })
+  sport: string;
+
   @Column({ name: 'is_verified', default: false })
   isVerified: boolean;
 

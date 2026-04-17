@@ -19,8 +19,8 @@ export class SchedulerService {
     private readonly config: ConfigService,
   ) {}
 
-  // 1am: enqueue crawl jobs for every active target URL
-  @Cron('0 1 * * *')
+  // Disabled automatic scheduling — trigger manually from admin pipeline
+  // @Cron('0 1 * * *')
   async scheduleDailyCrawl() {
     this.logger.log('Daily crawl scheduler running...');
     const targets = await this.targetUrlsService.findActive();
@@ -43,8 +43,7 @@ export class SchedulerService {
     this.logger.log(`Enqueued ${targets.length} crawl jobs`);
   }
 
-  // 2:30am: web URL discovery from known domains + configured search terms
-  @Cron('30 2 * * *')
+  // @Cron('30 2 * * *')
   async scheduleDailyDiscovery() {
     this.logger.log('Daily URL discovery running...');
 
@@ -72,8 +71,7 @@ export class SchedulerService {
     this.logger.log(`Queued discovery for known_domains + ${searchTerms.length} search terms`);
   }
 
-  // 4am: retrain classifier with all labeled data (runs after crawl outcomes are updated)
-  @Cron('0 4 * * *')
+  // @Cron('0 4 * * *')
   async scheduleDailyRetrain() {
     this.logger.log('Daily classifier retrain running...');
     await this.discoverQueue.add(

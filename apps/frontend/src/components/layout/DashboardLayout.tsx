@@ -118,6 +118,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <div style={{ height: '1px', background: 'rgba(237,229,207,0.07)', margin: '12px 0' }} />
               {[
                 { href: '/admin/profiles', label: 'Profiles' },
+                { href: '/admin/pipeline', label: 'Pipeline' },
                 { href: '/admin/takedowns', label: 'Takedown Queue' },
                 { href: '/admin/urls', label: 'URL Ranking' },
               ].map(({ href, label }) => {

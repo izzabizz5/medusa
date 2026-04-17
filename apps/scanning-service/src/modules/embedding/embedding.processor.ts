@@ -1,7 +1,7 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Job } from 'bullmq';
 import { FaceEmbedding, EmbeddingSourceType } from '../../entities/face-embedding.entity';
 import { FoundImage, ScanStatus } from '../../entities/found-image.entity';
@@ -25,8 +25,19 @@ export class ScanProcessor extends WorkerHost {
 
   async process(job: Job<ScanJobPayload>) {
     const { foundImageId, imageUrl, storageKey } = job.data;
-    this.logger.log(`Scanning found image ${foundImageId}`);
 
+    // Skip if already processed (handles retries, restarts, duplicate queue entries)
+    const existing = await this.foundImageRepo.findOne({ where: { id: foundImageId } });
+    if (!existing) {
+      this.logger.warn(`Found image ${foundImageId} no longer exists, skipping`);
+      return;
+    }
+    if (existing.scanStatus === ScanStatus.EMBEDDED || existing.scanStatus === ScanStatus.NO_FACE) {
+      this.logger.log(`Skipping already-processed image ${foundImageId} (${existing.scanStatus})`);
+      return;
+    }
+
+    this.logger.log(`Scanning found image ${foundImageId}`);
     await this.foundImageRepo.update(foundImageId, { scanStatus: ScanStatus.SCANNING });
 
     try {
@@ -36,6 +47,20 @@ export class ScanProcessor extends WorkerHost {
 
       if (!result.hasFace || !result.vector?.length) {
         await this.foundImageRepo.update(foundImageId, { scanStatus: ScanStatus.NO_FACE });
+        return;
+      }
+
+      // Check if embedding already exists for this image (dedup)
+      const existingEmb = await this.embeddingRepo.findOne({
+        where: { sourceType: EmbeddingSourceType.FOUND, sourceId: foundImageId },
+      });
+      if (existingEmb) {
+        await this.foundImageRepo.update(foundImageId, {
+          scanStatus: ScanStatus.EMBEDDED,
+          embeddingId: existingEmb.id,
+          hasFace: true,
+        });
+        this.logger.log(`Embedding already exists for ${foundImageId}, linked`);
         return;
       }
 
@@ -79,6 +104,15 @@ export class EmbedRefProcessor extends WorkerHost {
 
   async process(job: Job<EmbedRefJobPayload>) {
     const { referencePhotoId, userId, storageKey } = job.data;
+
+    // Skip if already embedded
+    const existing = await this.referencePhotoRepo.findOne({ where: { id: referencePhotoId } });
+    if (!existing) return;
+    if (existing.status === ReferencePhotoStatus.EMBEDDED) {
+      this.logger.log(`Skipping already-embedded ref photo ${referencePhotoId}`);
+      return;
+    }
+
     this.logger.log(`Embedding reference photo ${referencePhotoId} for user ${userId}`);
 
     try {

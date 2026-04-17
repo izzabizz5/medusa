@@ -162,8 +162,7 @@ export class UrlDiscoveryService {
       if (!res.ok) return [];
       const html = await res.text();
 
-      // DDG HTML results: result links are inside <a class="result__url"> or result__a
-      // Extract URLs from uddg= parameters in DDG redirect links
+      // DDG HTML results: extract URLs from uddg= redirect parameters
       const uddgMatches = [...html.matchAll(/uddg=([^&"]+)/g)];
       const decoded = uddgMatches
         .map((m) => {
@@ -175,14 +174,27 @@ export class UrlDiscoveryService {
         })
         .filter((u): u is string => !!u && u.startsWith('http'));
 
-      // Also extract plain hrefs
-      const hrefs = this.extractHrefs(html, 'https://html.duckduckgo.com');
+      // Filter to actual web pages — reject assets, stylesheets, images, etc.
+      const filtered = decoded.filter((url) => this.isWebPage(url));
 
-      return [...new Set([...decoded, ...hrefs])];
+      return [...new Set(filtered)];
     } catch (err) {
       this.logger.warn(`DuckDuckGo search failed: ${err.message}`);
       return [];
     }
+  }
+
+  /** Reject URLs that point to assets instead of actual web pages. */
+  private isWebPage(url: string): boolean {
+    const lower = url.toLowerCase();
+    // Reject direct links to images, stylesheets, scripts, fonts, etc.
+    const assetExtensions = /\.(css|js|svg|ico|png|jpg|jpeg|gif|webp|woff2?|ttf|eot|pdf|zip|mp4|mp3|xml|json|rss)(\?|$)/;
+    if (assetExtensions.test(lower)) return false;
+    // Reject common CDN/asset hostnames
+    if (/cdn\.|static\.|assets\.|fonts\.|media\./.test(lower)) return false;
+    // Reject DuckDuckGo's own links
+    if (lower.includes('duckduckgo.com')) return false;
+    return true;
   }
 
   private extractHrefs(html: string, baseUrl: string): string[] {

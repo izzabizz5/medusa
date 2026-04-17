@@ -10,6 +10,7 @@ export interface SessionUser {
   email: string;
   fullName: string;
   role: UserRole;
+  sport: string | null;
 }
 
 @Injectable()
@@ -54,6 +55,6 @@ export class AuthService {
   }
 
   private toSessionUser(user: User): SessionUser {
-    return { id: user.id, email: user.email, fullName: user.fullName, role: user.role };
+    return { id: user.id, email: user.email, fullName: user.fullName, role: user.role, sport: user.sport ?? null };
   }
 }

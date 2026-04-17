@@ -3,6 +3,7 @@ export interface AuthUser {
   email: string;
   fullName: string;
   role: 'athlete' | 'admin';
+  sport: string | null;
 }
 
 const USER_KEY = 'medusa_user';

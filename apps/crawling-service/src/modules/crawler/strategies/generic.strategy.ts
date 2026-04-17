@@ -28,15 +28,24 @@ export class GenericStrategy {
 
       // Scroll to trigger lazy loading
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-      await page.waitForTimeout(2000);
+      await page.waitForTimeout(800);
 
       const html = await page.content();
       const images = this.imageExtractor.extractFromHtml(html, url);
 
-      // Also grab any dynamically loaded <img> elements
+      // Also grab any dynamically loaded <img> elements — filter to real photos only
       const dynamicImages = await page.$$eval('img[src]', (imgs) =>
         (imgs as HTMLImageElement[])
-          .filter((img) => img.naturalWidth > 200 && img.naturalHeight > 200)
+          .filter((img) => {
+            // Skip tiny images (icons, spacers, tracking pixels)
+            if (img.naturalWidth < 150 || img.naturalHeight < 150) return false;
+            const src = img.src.toLowerCase();
+            // Skip non-photo formats
+            if (!/\.(jpg|jpeg|png|webp)(\?|$)/.test(src)) return false;
+            // Skip common junk paths
+            if (/favicon|icon|logo|sprite|avatar|banner|static\/|assets\/|\.svg|\.ico/.test(src)) return false;
+            return true;
+          })
           .map((img) => img.src),
       );
 

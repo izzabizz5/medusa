@@ -13,8 +13,8 @@ export class MatchSchedulerService {
     private readonly matchQueue: Queue,
   ) {}
 
-  // Every day at 3am
-  @Cron('0 3 * * *')
+  // Disabled automatic scheduling — trigger manually from admin pipeline
+  // @Cron('0 3 * * *')
   async scheduleDailyMatchBatch() {
     const batchDate = new Date().toISOString().split('T')[0];
     this.logger.log(`Scheduling daily match batch for ${batchDate}`);

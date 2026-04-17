@@ -34,7 +34,7 @@ export class MatcherService {
 
     // Load all reference embeddings
     const refQuery = this.refPhotoRepo.createQueryBuilder('rp')
-      .innerJoin(FaceEmbedding, 'fe', "fe.source_type = 'reference' AND fe.source_id = rp.id::text")
+      .innerJoin(FaceEmbedding, 'fe', "fe.source_type = 'reference' AND fe.source_id = rp.id")
       .select(['rp.id as photo_id', 'rp.user_id as user_id', 'fe.id as embedding_id', 'fe.vector as vector'])
       .where('rp.status = :status', { status: 'embedded' });
 

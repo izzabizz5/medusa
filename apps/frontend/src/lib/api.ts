@@ -77,10 +77,13 @@ export const urlsApi = {
 // Admin — profile management + impersonation
 export const adminApi = {
   listUsers: () => api.get('/admin/users'),
-  createProfile: (data: { name: string; email?: string }) =>
+  createProfile: (data: { name: string; sport?: string; email?: string }) =>
     api.post('/admin/users', data),
   impersonate: (id: string) => api.post(`/admin/impersonate/${id}`),
   exitImpersonation: () => api.post('/admin/impersonate/exit'),
+  triggerCrawl: () => api.post('/admin/pipeline/crawl'),
+  triggerMatch: () => api.post('/admin/pipeline/match'),
+  triggerDiscover: () => api.post('/admin/pipeline/discover'),
 };
 
 // Takedowns

@@ -9,16 +9,15 @@ export class PythonBridgeService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PythonBridgeService.name);
   private readonly bridgeUrl: string;
   private sidecarProcess: ChildProcess | null = null;
+  private readyPromise: Promise<void>;
 
   constructor(private readonly config: ConfigService) {
     this.bridgeUrl = config.get('PYTHON_BRIDGE_URL', 'http://localhost:8080');
   }
 
   async onModuleInit() {
-    if (this.config.get('AUTO_START_PYTHON', 'true') === 'true') {
-      await this.startSidecar();
-    }
-    await this.waitForReady();
+    // Store the readiness promise — embedImage() awaits it before calling the sidecar
+    this.readyPromise = this.bootstrap();
   }
 
   async onModuleDestroy() {
@@ -29,10 +28,10 @@ export class PythonBridgeService implements OnModuleInit, OnModuleDestroy {
   }
 
   async embedImage(storageKey?: string, imageUrl?: string): Promise<FaceEmbeddingResult> {
+    // Block until the sidecar is up — prevents ECONNREFUSED on startup
+    await this.readyPromise;
+
     try {
-      // When running locally (no real S3), pass a fallback URL so the Python
-      // sidecar can fetch the file from the backend's static file server if
-      // the S3 download fails.
       const backendUrl = this.config.get('BACKEND_URL', '');
       const fallbackUrl = !imageUrl && storageKey && backendUrl
         ? `${backendUrl}/uploads/${storageKey}`
@@ -54,6 +53,15 @@ export class PythonBridgeService implements OnModuleInit, OnModuleDestroy {
       this.logger.error(`Python bridge embed failed: ${err.message}`);
       throw err;
     }
+  }
+
+  private async bootstrap() {
+    const t0 = Date.now();
+    if (this.config.get('AUTO_START_PYTHON', 'true') === 'true') {
+      await this.startSidecar();
+    }
+    await this.waitForReady();
+    this.logger.log(`Python sidecar startup took ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   }
 
   private async startSidecar() {

@@ -1,12 +1,18 @@
 """
 Medusa Scanning Service - Python FastAPI Sidecar
-Wraps InsightFace ArcFace (buffalo_l model) for face embedding extraction.
+
+Face embedding pipeline:
+  1. Face Detection   — RetinaFace (via InsightFace det model)
+  2. Face Alignment   — 5-point landmark affine warp → 112x112 normalized crop
+  3. Face Embedding   — ArcFace (w600k_r50) → 512-dim L2-normalized vector
+
 Called by the NestJS scanning-service via localhost HTTP.
 """
 
 import os
 import io
 import logging
+import time
 from typing import Optional
 import numpy as np
 import cv2
@@ -21,24 +27,35 @@ import uvicorn
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# --- InsightFace setup ---
+# ── Configuration ──────────────────────────────────────────────
+MIN_FACE_SIZE = int(os.getenv("MIN_FACE_SIZE", "40"))        # px — skip tiny faces
+MIN_DET_SCORE = float(os.getenv("MIN_DET_SCORE", "0.5"))     # detection confidence
+MAX_IMAGE_DIM = int(os.getenv("MAX_IMAGE_DIM", "1280"))       # downscale limit
+DET_SIZE_STR  = os.getenv("DET_SIZE", "640,640")               # detection input size
+
+# ── InsightFace setup ──────────────────────────────────────────
 try:
     import insightface
     from insightface.app import FaceAnalysis
+    from insightface.utils.face_align import norm_crop
 
     INSIGHTFACE_MODEL = os.getenv("INSIGHTFACE_MODEL", "buffalo_l")
     face_app = FaceAnalysis(
         name=INSIGHTFACE_MODEL,
         providers=["CPUExecutionProvider"],
     )
-    face_app.prepare(ctx_id=-1, det_size=(640, 640))
-    logger.info(f"InsightFace model '{INSIGHTFACE_MODEL}' loaded successfully")
+    DET_SIZE = tuple(int(x) for x in DET_SIZE_STR.split(","))
+    face_app.prepare(ctx_id=-1, det_size=DET_SIZE)
+    logger.info(
+        f"InsightFace '{INSIGHTFACE_MODEL}' loaded — det_size={DET_SIZE}, "
+        f"min_face={MIN_FACE_SIZE}px, min_score={MIN_DET_SCORE}"
+    )
     INSIGHTFACE_AVAILABLE = True
 except Exception as e:
     logger.warning(f"InsightFace not available: {e}. Falling back to DeepFace.")
     INSIGHTFACE_AVAILABLE = False
 
-# --- S3 / Object Storage client ---
+# ── S3 / Object Storage client ─────────────────────────────────
 s3_client = boto3.client(
     "s3",
     endpoint_url=os.getenv("OBJECT_STORAGE_ENDPOINT"),
@@ -62,21 +79,18 @@ class EmbedResponse(BaseModel):
     face_count: int
     vector: Optional[list[float]] = None
     model_name: str
+    det_score: Optional[float] = None
+    face_size: Optional[int] = None
     error: Optional[str] = None
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "insightface": INSIGHTFACE_AVAILABLE}
+    return {"status": "ok", "insightface": INSIGHTFACE_AVAILABLE, "model": os.getenv("INSIGHTFACE_MODEL", "buffalo_l")}
 
 
 @app.post("/embed", response_model=EmbedResponse)
 async def embed_image(req: EmbedRequest) -> EmbedResponse:
-    """
-    Extract face embedding from an image.
-    Accepts either a storage_key (S3 object) or an image_url (direct URL).
-    Returns the 512-dimensional ArcFace embedding vector of the primary face.
-    """
     try:
         img_bytes = await load_image_bytes(req.storage_key, req.image_url)
         if not img_bytes:
@@ -98,7 +112,6 @@ async def embed_image(req: EmbedRequest) -> EmbedResponse:
 
 @app.post("/embed-batch")
 async def embed_batch(requests: list[EmbedRequest]) -> list[EmbedResponse]:
-    """Batch embedding for multiple images."""
     results = []
     for req in requests:
         result = await embed_image(req)
@@ -106,20 +119,94 @@ async def embed_batch(requests: list[EmbedRequest]) -> list[EmbedResponse]:
     return results
 
 
-def embed_with_insightface(img_array: np.ndarray) -> EmbedResponse:
-    faces = face_app.get(img_array)
-    if not faces:
-        return EmbedResponse(has_face=False, face_count=0, model_name=f"insightface-{INSIGHTFACE_MODEL}")
+# ── Core pipeline ──────────────────────────────────────────────
 
-    # Use the largest face (most likely the subject)
-    primary = max(faces, key=lambda f: (f.bbox[2] - f.bbox[0]) * (f.bbox[3] - f.bbox[1]))
-    vector = primary.embedding.tolist()
+def _downscale(img: np.ndarray) -> np.ndarray:
+    """Downscale oversized images to MAX_IMAGE_DIM while preserving aspect ratio."""
+    h, w = img.shape[:2]
+    if max(h, w) <= MAX_IMAGE_DIM:
+        return img
+    scale = MAX_IMAGE_DIM / max(h, w)
+    return cv2.resize(img, (int(w * scale), int(h * scale)), interpolation=cv2.INTER_AREA)
+
+
+def _face_area(face) -> int:
+    """Bounding box area in pixels."""
+    bbox = face.bbox
+    return int((bbox[2] - bbox[0]) * (bbox[3] - bbox[1]))
+
+
+def _face_dim(face) -> int:
+    """Longest side of the bounding box."""
+    bbox = face.bbox
+    return int(max(bbox[2] - bbox[0], bbox[3] - bbox[1]))
+
+
+def _l2_normalize(vec: np.ndarray) -> np.ndarray:
+    """L2-normalize embedding vector — required for cosine similarity comparisons."""
+    norm = np.linalg.norm(vec)
+    if norm < 1e-10:
+        return vec
+    return vec / norm
+
+
+def embed_with_insightface(img_array: np.ndarray) -> EmbedResponse:
+    t0 = time.time()
+    model_name = f"insightface-{INSIGHTFACE_MODEL}"
+
+    # ── Step 0: Downscale oversized images ──
+    img_array = _downscale(img_array)
+
+    # ── Step 1: Face Detection (RetinaFace) ──
+    # face_app.get() internally runs:
+    #   - RetinaFace detector → bounding boxes + 5-point landmarks + confidence scores
+    #   - For each detected face:
+    #     ── Step 2: Face Alignment ──
+    #     - 5-point landmark affine transform → 112×112 normalized crop
+    #     ── Step 3: Face Embedding (ArcFace w600k_r50) ──
+    #     - Forward pass through recognition network → 512-dim vector
+    faces = face_app.get(img_array)
+
+    if not faces:
+        logger.debug(f"No faces detected ({time.time()-t0:.2f}s)")
+        return EmbedResponse(has_face=False, face_count=0, model_name=model_name)
+
+    # ── Filter: minimum face size + detection confidence ──
+    qualified = [
+        f for f in faces
+        if _face_dim(f) >= MIN_FACE_SIZE and f.det_score >= MIN_DET_SCORE
+    ]
+
+    if not qualified:
+        logger.debug(
+            f"{len(faces)} face(s) detected but none met quality threshold "
+            f"(min {MIN_FACE_SIZE}px, min score {MIN_DET_SCORE})"
+        )
+        return EmbedResponse(has_face=False, face_count=len(faces), model_name=model_name)
+
+    # Pick the largest qualified face (most likely the subject)
+    primary = max(qualified, key=_face_area)
+
+    # ── Step 4: L2 normalize the embedding ──
+    raw_embedding = primary.embedding
+    normalized = _l2_normalize(raw_embedding)
+    vector = normalized.tolist()
+
+    elapsed = time.time() - t0
+    face_px = _face_dim(primary)
+    logger.debug(
+        f"Embedded: {len(qualified)}/{len(faces)} faces qualified, "
+        f"primary={face_px}px, score={primary.det_score:.3f}, "
+        f"{elapsed:.2f}s"
+    )
 
     return EmbedResponse(
         has_face=True,
-        face_count=len(faces),
+        face_count=len(qualified),
         vector=vector,
-        model_name=f"insightface-{INSIGHTFACE_MODEL}",
+        model_name=model_name,
+        det_score=round(float(primary.det_score), 4),
+        face_size=face_px,
     )
 
 
@@ -142,10 +229,14 @@ def embed_with_deepface(img_bytes: bytes) -> EmbedResponse:
         os.unlink(tmp_path)
 
         if result:
+            # L2-normalize DeepFace embedding too
+            vec = np.array(result[0]["embedding"], dtype=np.float32)
+            vec = _l2_normalize(vec).tolist()
+
             return EmbedResponse(
                 has_face=True,
                 face_count=len(result),
-                vector=result[0]["embedding"],
+                vector=vec,
                 model_name="deepface-arcface",
             )
     except Exception as e:
@@ -153,6 +244,8 @@ def embed_with_deepface(img_bytes: bytes) -> EmbedResponse:
 
     return EmbedResponse(has_face=False, face_count=0, model_name="deepface-arcface")
 
+
+# ── Image loading ──────────────────────────────────────────────
 
 async def load_image_bytes(storage_key: Optional[str], image_url: Optional[str]) -> Optional[bytes]:
     if storage_key:

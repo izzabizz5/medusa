@@ -41,6 +41,18 @@ export class TargetUrl {
   @Index()
   addedBy: string;
 
+  @Column({ name: 'ml_score', type: 'float', nullable: true })
+  mlScore: number | null;
+
+  @Column({ name: 'ml_label', type: 'varchar', nullable: true })
+  mlLabel: string | null;
+
+  @Column({ name: 'auto_discovered', default: false })
+  autoDiscovered: boolean;
+
+  @Column({ name: 'priority', type: 'smallint', nullable: true })
+  priority: number | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 }

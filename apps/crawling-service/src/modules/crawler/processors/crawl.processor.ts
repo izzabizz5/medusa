@@ -6,6 +6,8 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue, Job } from 'bullmq';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   S3Client,
   PutObjectCommand,
@@ -19,10 +21,12 @@ import { DedupService } from '../../dedup/dedup.service';
 import { QUEUES, JOBS, CrawlJobPayload, ScanJobPayload, hashImageUrl } from '@medusa/shared';
 import { randomUUID } from 'crypto';
 
-@Processor(QUEUES.CRAWL, { concurrency: 3 })
+@Processor(QUEUES.CRAWL, { concurrency: 6 })
 export class CrawlProcessor extends WorkerHost {
   private readonly logger = new Logger(CrawlProcessor.name);
-  private readonly s3: S3Client;
+  private readonly s3: S3Client | null;
+  private readonly localMode: boolean;
+  private readonly uploadsDir: string;
 
   constructor(
     @InjectRepository(CrawlRun)
@@ -39,15 +43,25 @@ export class CrawlProcessor extends WorkerHost {
     private readonly config: ConfigService,
   ) {
     super();
-    this.s3 = new S3Client({
-      endpoint: config.get('OBJECT_STORAGE_ENDPOINT'),
-      region: config.get('OBJECT_STORAGE_REGION', 'us-ashburn-1'),
-      credentials: {
-        accessKeyId: config.get('OBJECT_STORAGE_ACCESS_KEY', ''),
-        secretAccessKey: config.get('OBJECT_STORAGE_SECRET_KEY', ''),
-      },
-      forcePathStyle: true,
-    });
+
+    const accessKey = config.get('OBJECT_STORAGE_ACCESS_KEY', '');
+    const secretKey = config.get('OBJECT_STORAGE_SECRET_KEY', '');
+    this.localMode = !accessKey || accessKey === 'your-access-key' || !secretKey || secretKey === 'your-secret-key';
+
+    if (this.localMode) {
+      this.s3 = null;
+      this.uploadsDir = path.resolve(process.cwd(), 'uploads', 'found-images');
+      if (!fs.existsSync(this.uploadsDir)) fs.mkdirSync(this.uploadsDir, { recursive: true });
+      this.logger.log('Running in local storage mode (no S3)');
+    } else {
+      this.uploadsDir = '';
+      this.s3 = new S3Client({
+        endpoint: config.get('OBJECT_STORAGE_ENDPOINT'),
+        region: config.get('OBJECT_STORAGE_REGION', 'us-ashburn-1'),
+        credentials: { accessKeyId: accessKey, secretAccessKey: secretKey },
+        forcePathStyle: true,
+      });
+    }
   }
 
   async process(job: Job<CrawlJobPayload>) {
@@ -59,7 +73,6 @@ export class CrawlProcessor extends WorkerHost {
     );
 
     try {
-      // Choose strategy based on platform
       const rawImages = platform === 'reddit'
         ? await this.redditStrategy.crawl(url)
         : await this.genericStrategy.crawl(url);
@@ -68,47 +81,54 @@ export class CrawlProcessor extends WorkerHost {
 
       // Dedup check in batch
       const knownHashes = await this.dedupService.getKnownIds(rawImages.map((i) => i.imageUrl));
+      const newImages = rawImages.filter((i) => !knownHashes.has(hashImageUrl(i.imageUrl)));
 
+      // Download + store in parallel (batches of 10)
+      const batchSize = 10;
       let newCount = 0;
-      const delay = parseInt(this.config.get('CRAWL_DELAY_MS', '2000'));
 
-      for (const rawImage of rawImages) {
-        const urlHash = hashImageUrl(rawImage.imageUrl);
-        if (knownHashes.has(urlHash)) continue;
+      for (let i = 0; i < newImages.length; i += batchSize) {
+        const batch = newImages.slice(i, i + batchSize);
+        const results = await Promise.allSettled(
+          batch.map(async (rawImage) => {
+            const urlHash = hashImageUrl(rawImage.imageUrl);
+            let storageKey: string | null = null;
+            try {
+              storageKey = await this.downloadAndStore(rawImage.imageUrl);
+            } catch (err) {
+              this.logger.warn(`Failed to download ${rawImage.imageUrl}: ${err.message}`);
+            }
 
-        // Download image and store
-        let storageKey: string | null = null;
-        try {
-          storageKey = await this.downloadAndStore(rawImage.imageUrl);
-        } catch (err) {
-          this.logger.warn(`Failed to download ${rawImage.imageUrl}: ${err.message}`);
-        }
+            const foundImage = await this.foundImageRepo.save(
+              this.foundImageRepo.create({
+                crawlRunId: crawlRun.id,
+                targetUrlId,
+                imageUrl: rawImage.imageUrl,
+                pageUrl: rawImage.pageUrl,
+                storageKey,
+                urlHash,
+                scanStatus: ScanStatus.PENDING,
+              }),
+            );
 
-        const foundImage = await this.foundImageRepo.save(
-          this.foundImageRepo.create({
-            crawlRunId: crawlRun.id,
-            targetUrlId,
-            imageUrl: rawImage.imageUrl,
-            pageUrl: rawImage.pageUrl,
-            storageKey,
-            urlHash,
-            scanStatus: ScanStatus.PENDING,
+            const scanPayload: ScanJobPayload = {
+              foundImageId: foundImage.id,
+              imageUrl: rawImage.imageUrl,
+              storageKey,
+            };
+            await this.scanQueue.add(JOBS.SCAN_IMAGE, scanPayload, {
+              attempts: 2,
+              backoff: { type: 'fixed', delay: 30000 },
+            });
+
+            return foundImage;
           }),
         );
 
-        // Enqueue for facial recognition
-        const scanPayload: ScanJobPayload = {
-          foundImageId: foundImage.id,
-          imageUrl: rawImage.imageUrl,
-          storageKey,
-        };
-        await this.scanQueue.add(JOBS.SCAN_IMAGE, scanPayload, {
-          attempts: 2,
-          backoff: { type: 'fixed', delay: 30000 },
-        });
+        newCount += results.filter((r) => r.status === 'fulfilled').length;
 
-        newCount++;
-        await this.sleep(delay);
+        const delay = parseInt(this.config.get('CRAWL_DELAY_MS', '0'));
+        if (delay > 0) await this.sleep(delay);
       }
 
       crawlRun.imagesNew = newCount;
@@ -116,7 +136,6 @@ export class CrawlProcessor extends WorkerHost {
       crawlRun.completedAt = new Date();
       await this.crawlRunRepo.save(crawlRun);
 
-      // Update lastCrawledAt on target URL
       await this.targetUrlRepo.update(targetUrlId, { lastCrawledAt: new Date() });
 
       this.logger.log(`Crawl complete: ${newCount} new images from ${rawImages.length} found`);
@@ -133,11 +152,9 @@ export class CrawlProcessor extends WorkerHost {
   private async downloadAndStore(imageUrl: string): Promise<string> {
     const response = await axios.get(imageUrl, {
       responseType: 'arraybuffer',
-      timeout: 15000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; MedusaBot/1.0)',
-      },
-      maxContentLength: 20 * 1024 * 1024, // 20MB max
+      timeout: 10000,
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MedusaBot/1.0)' },
+      maxContentLength: 20 * 1024 * 1024,
     });
 
     const buffer = Buffer.from(response.data);
@@ -145,14 +162,19 @@ export class CrawlProcessor extends WorkerHost {
     const ext = contentType.split('/')[1]?.split(';')[0] || 'jpg';
     const key = `found-images/${randomUUID()}.${ext}`;
 
-    await this.s3.send(
-      new PutObjectCommand({
-        Bucket: this.config.get('OBJECT_STORAGE_BUCKET', 'medusa-files'),
-        Key: key,
-        Body: buffer,
-        ContentType: contentType,
-      }),
-    );
+    if (this.localMode) {
+      const filename = key.split('/').pop()!;
+      fs.writeFileSync(path.join(this.uploadsDir, filename), buffer);
+    } else {
+      await this.s3!.send(
+        new PutObjectCommand({
+          Bucket: this.config.get('OBJECT_STORAGE_BUCKET', 'medusa-files'),
+          Key: key,
+          Body: buffer,
+          ContentType: contentType,
+        }),
+      );
+    }
 
     return key;
   }
