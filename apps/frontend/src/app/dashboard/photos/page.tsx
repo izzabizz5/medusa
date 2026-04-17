@@ -2,18 +2,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { photosApi } from '@/lib/api';
-import { Upload, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 const STATUS_CONFIG = {
-  pending: { label: 'Queued', icon: Clock, color: 'text-gray-500' },
-  processing: { label: 'Processing', icon: Clock, color: 'text-yellow-600' },
-  embedded: { label: 'Protected', icon: CheckCircle, color: 'text-green-600' },
-  failed: { label: 'Failed', icon: AlertCircle, color: 'text-red-600' },
+  pending:    { label: 'Queued',      color: 'rgba(237,229,207,0.35)' },
+  processing: { label: 'Processing',  color: '#e89828' },
+  embedded:   { label: 'Protected',   color: '#8fc832' },
+  failed:     { label: 'Failed',      color: '#d96858' },
 };
 
 export default function PhotosPage() {
   const [photos, setPhotos] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -25,6 +25,21 @@ export default function PhotosPage() {
   }, []);
 
   useEffect(() => { loadPhotos(); }, [loadPhotos]);
+
+  const failedCount = photos.filter((p) => p.status === 'failed').length;
+
+  const handleRetry = async () => {
+    setRetrying(true);
+    setError('');
+    try {
+      await photosApi.retryFailed();
+      await loadPhotos();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Retry failed');
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -44,46 +59,73 @@ export default function PhotosPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">My Protected Photos</h1>
-        <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-          className="flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700 disabled:opacity-50">
-          <Upload className="w-4 h-4" />
-          {uploading ? 'Uploading...' : 'Upload photo'}
-        </button>
-        <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp"
-          className="hidden" onChange={handleUpload} />
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '48px' }}>
+        <div>
+          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.35)', marginBottom: '10px' }}>
+            Reference images
+          </p>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '42px', fontWeight: 700, color: '#ede5cf', letterSpacing: '-0.02em', lineHeight: 1, margin: 0 }}>
+            My Photos.
+          </h1>
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          {failedCount > 0 && (
+            <button
+              onClick={handleRetry}
+              disabled={retrying}
+              style={{ background: 'transparent', color: '#d96858', fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 500, padding: '12px 18px', border: '1px solid rgba(217,104,88,0.35)', cursor: retrying ? 'not-allowed' : 'pointer', opacity: retrying ? 0.6 : 1 }}
+            >
+              {retrying ? 'Retrying...' : `↺ Retry failed (${failedCount})`}
+            </button>
+          )}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            style={{ background: uploading ? 'rgba(143,200,50,0.5)' : '#8fc832', color: '#0d1614', fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 500, padding: '12px 22px', border: 'none', cursor: uploading ? 'not-allowed' : 'pointer' }}
+          >
+            {uploading ? 'Uploading...' : '+ Upload photo'}
+          </button>
+        </div>
+        <input ref={fileInputRef} type="file" accept="image/jpeg,image/png,image/webp" style={{ display: 'none' }} onChange={handleUpload} />
       </div>
 
-      {error && <div className="bg-red-50 text-red-700 text-sm rounded-lg p-3 mb-4">{error}</div>}
+      {error && (
+        <div style={{ background: 'rgba(217,104,88,0.12)', border: '1px solid rgba(217,104,88,0.25)', color: '#d96858', fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', padding: '12px 14px', marginBottom: '24px', letterSpacing: '0.04em' }}>
+          {error}
+        </div>
+      )}
 
-      <div className="bg-primary-50 border border-primary-100 rounded-xl p-4 mb-6 text-sm text-primary-700">
-        Upload clear, front-facing photos of your face. Multiple photos improve recognition accuracy.
-        Photos are stored securely and only used for matching.
+      <div style={{ background: 'rgba(143,200,50,0.06)', border: '1px solid rgba(143,200,50,0.15)', padding: '16px 20px', marginBottom: '32px' }}>
+        <p style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '13px', fontWeight: 300, color: 'rgba(237,229,207,0.55)', lineHeight: 1.65, margin: 0 }}>
+          Upload clear, front-facing photos. Multiple photos improve recognition accuracy. Images are stored securely and used only for matching.
+        </p>
       </div>
 
       {photos.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <Upload className="w-12 h-12 mx-auto mb-3 opacity-40" />
-          <p>No photos uploaded yet</p>
+        <div style={{ textAlign: 'center', padding: '80px 0' }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '56px', opacity: 0.12, lineHeight: 1, marginBottom: '16px' }}>◇</div>
+          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.3)' }}>
+            No photos uploaded yet
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1px', background: 'rgba(237,229,207,0.07)' }}>
           {photos.map((photo) => {
             const cfg = STATUS_CONFIG[photo.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.pending;
             return (
-              <div key={photo.id} className="bg-white rounded-xl border overflow-hidden">
-                <div className="aspect-square bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
-                  {photo.originalName || 'Photo'}
+              <div key={photo.id} style={{ background: '#0d1614', overflow: 'hidden' }}>
+                <div style={{ aspectRatio: '1', background: 'rgba(27,52,34,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.2)' }}>
+                    {photo.originalName || 'photo'}
+                  </span>
                 </div>
-                <div className="p-3">
-                  <div className={`flex items-center gap-1.5 text-xs font-medium ${cfg.color}`}>
-                    <cfg.icon className="w-3.5 h-3.5" />
+                <div style={{ padding: '14px 16px' }}>
+                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: cfg.color, marginBottom: '4px' }}>
                     {cfg.label}
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">
+                  <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: 'rgba(237,229,207,0.25)', letterSpacing: '0.08em' }}>
                     {new Date(photo.createdAt).toLocaleDateString()}
-                  </p>
+                  </div>
                 </div>
               </div>
             );

@@ -3,7 +3,6 @@ import { Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Job } from 'bullmq';
 import * as nodemailer from 'nodemailer';
 import { TakedownRequest, TakedownEvent, TakedownStatus } from '../../../entities/takedown-request.entity';
 import { FoundImage } from '../../../entities/found-image.entity';
@@ -41,8 +40,10 @@ export class TakedownProcessor extends WorkerHost {
     });
   }
 
-  async process(job: Job<TakedownJobPayload>) {
-    const { name, data } = job;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async process(job: any): Promise<any> {
+    const name: string = job.name;
+    const data: TakedownJobPayload = job.data;
     this.logger.log(`Processing takedown job ${name} for request ${data.takedownRequestId}`);
 
     if (name === JOBS.FILE_DMCA_NOTICE) {

@@ -2,12 +2,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { matchesApi } from '@/lib/api';
-import { CheckCircle, XCircle, ExternalLink, AlertTriangle } from 'lucide-react';
 
-const CONFIDENCE_LABEL = (score: number) => {
-  if (score >= 0.55) return { label: 'High confidence', color: 'text-red-600 bg-red-50' };
-  return { label: 'Possible match', color: 'text-yellow-700 bg-yellow-50' };
-};
+const FILTERS = ['pending_review', 'confirmed', 'rejected', 'takedown_requested'];
+
+const CONFIDENCE = (score: number) =>
+  score >= 0.55
+    ? { label: 'High confidence', color: '#d96858' }
+    : { label: 'Possible match', color: '#e89828' };
 
 export default function MatchesPage() {
   const [matches, setMatches] = useState<any[]>([]);
@@ -28,130 +29,164 @@ export default function MatchesPage() {
 
   const handleConfirm = async (id: string) => {
     setActionLoading(id);
-    try {
-      await matchesApi.confirm(id);
-      await loadMatches();
-    } catch {} finally { setActionLoading(null); }
+    try { await matchesApi.confirm(id); await loadMatches(); } catch {} finally { setActionLoading(null); }
   };
 
   const handleReject = async (id: string) => {
     setActionLoading(id);
-    try {
-      await matchesApi.reject(id);
-      await loadMatches();
-    } catch {} finally { setActionLoading(null); }
+    try { await matchesApi.reject(id); await loadMatches(); } catch {} finally { setActionLoading(null); }
   };
 
   const handleTakedown = async (matchId: string, type: 'platform' | 'dmca') => {
     setActionLoading(matchId);
-    try {
-      await matchesApi.requestTakedown(matchId, type);
-      setTakedownModal(null);
-      await loadMatches();
-    } catch {} finally { setActionLoading(null); }
+    try { await matchesApi.requestTakedown(matchId, type); setTakedownModal(null); await loadMatches(); } catch {} finally { setActionLoading(null); }
   };
 
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold mb-6">Matches</h1>
+      <div style={{ marginBottom: '40px' }}>
+        <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.35)', marginBottom: '10px' }}>
+          Facial recognition results
+        </p>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '42px', fontWeight: 700, color: '#ede5cf', letterSpacing: '-0.02em', lineHeight: 1, margin: 0 }}>
+          Matches.
+        </h1>
+      </div>
 
-      <div className="flex gap-2 mb-6">
-        {['pending_review', 'confirmed', 'rejected', 'takedown_requested'].map((s) => (
-          <button key={s} onClick={() => setFilter(s)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium ${filter === s ? 'bg-primary-600 text-white' : 'bg-white border text-gray-600 hover:bg-gray-50'}`}>
-            {s.replace(/_/g, ' ')}
-          </button>
-        ))}
+      {/* Filter tabs */}
+      <div style={{ display: 'flex', gap: '2px', marginBottom: '32px', borderBottom: '1px solid rgba(237,229,207,0.07)', paddingBottom: '0' }}>
+        {FILTERS.map((s) => {
+          const active = filter === s;
+          return (
+            <button
+              key={s}
+              onClick={() => setFilter(s)}
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: '9px',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: active ? '#8fc832' : 'rgba(237,229,207,0.35)',
+                background: 'none',
+                border: 'none',
+                borderBottom: `2px solid ${active ? '#8fc832' : 'transparent'}`,
+                padding: '10px 16px',
+                cursor: 'pointer',
+                marginBottom: '-1px',
+              }}
+            >
+              {s.replace(/_/g, ' ')}
+            </button>
+          );
+        })}
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-gray-400">Loading...</div>
+        <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(237,229,207,0.25)' }}>
+          Loading...
+        </div>
       ) : matches.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">
-          <AlertTriangle className="w-10 h-10 mx-auto mb-3 opacity-40" />
-          <p>No {filter.replace(/_/g, ' ')} matches</p>
+        <div style={{ textAlign: 'center', padding: '80px 0' }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '56px', opacity: 0.12, lineHeight: 1, marginBottom: '16px' }}>◇</div>
+          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.3)' }}>
+            No {filter.replace(/_/g, ' ')} matches
+          </p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'rgba(237,229,207,0.07)' }}>
           {matches.map((match) => {
-            const conf = CONFIDENCE_LABEL(match.similarityScore);
+            const conf = CONFIDENCE(match.similarityScore);
             return (
-              <div key={match.id} className="bg-white rounded-xl border p-5">
-                <div className="flex items-start gap-4">
-                  {/* Side by side images */}
-                  <div className="flex gap-3">
-                    <div className="text-center">
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
-                        {match.refImageUrl && (
-                          <img src={match.refImageUrl} alt="Your photo" className="w-full h-full object-cover" />
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-400 mt-1">Your photo</p>
+              <div key={match.id} style={{ background: '#0d1614', padding: '24px 28px', display: 'flex', alignItems: 'center', gap: '28px' }}>
+                {/* Images */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ width: '72px', height: '72px', background: 'rgba(27,52,34,0.6)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {match.refImageUrl
+                        ? <img src={match.refImageUrl} alt="Your photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '8px', color: 'rgba(237,229,207,0.2)' }}>ref</span>
+                      }
                     </div>
-                    <div className="flex items-center text-gray-300 text-lg">→</div>
-                    <div className="text-center">
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg overflow-hidden">
-                        {match.foundImageUrl && (
-                          <img src={match.foundImageUrl} alt="Found online" className="w-full h-full object-cover" />
-                        )}
-                      </div>
-                      <p className="text-xs text-gray-400 mt-1">Found online</p>
-                    </div>
+                    <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '8px', letterSpacing: '0.1em', color: 'rgba(237,229,207,0.25)', marginTop: '6px' }}>your photo</p>
                   </div>
-
-                  {/* Details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${conf.color}`}>
-                        {conf.label}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {(match.similarityScore * 100).toFixed(1)}% similarity
-                      </span>
+                  <span style={{ color: 'rgba(237,229,207,0.2)', fontSize: '18px' }}>→</span>
+                  <div style={{ textAlign: 'center' }}>
+                    <div style={{ width: '72px', height: '72px', background: 'rgba(27,52,34,0.6)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {match.foundImageUrl
+                        ? <img src={match.foundImageUrl} alt="Found online" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '8px', color: 'rgba(237,229,207,0.2)' }}>found</span>
+                      }
                     </div>
-
-                    {match.foundImage?.pageUrl && (
-                      <a href={match.foundImage.pageUrl} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-xs text-primary-600 hover:underline mb-3 truncate max-w-xs">
-                        <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                        {match.foundImage.pageUrl}
-                      </a>
-                    )}
-
-                    <p className="text-xs text-gray-400">Found {new Date(match.createdAt).toLocaleDateString()}</p>
+                    <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '8px', letterSpacing: '0.1em', color: 'rgba(237,229,207,0.25)', marginTop: '6px' }}>found online</p>
                   </div>
+                </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-col gap-2">
-                    {match.status === 'pending_review' && (
-                      <>
-                        <div className="text-xs text-gray-500 font-medium mb-1">Is this you?</div>
-                        <button onClick={() => handleConfirm(match.id)}
-                          disabled={actionLoading === match.id}
-                          className="flex items-center gap-1.5 bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-red-700 disabled:opacity-50">
-                          <CheckCircle className="w-3.5 h-3.5" />
-                          Yes, it's me
-                        </button>
-                        <button onClick={() => handleReject(match.id)}
-                          disabled={actionLoading === match.id}
-                          className="flex items-center gap-1.5 bg-white border text-gray-600 px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-gray-50 disabled:opacity-50">
-                          <XCircle className="w-3.5 h-3.5" />
-                          Not me
-                        </button>
-                      </>
-                    )}
+                {/* Details */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.12em', textTransform: 'uppercase', color: conf.color }}>
+                      {conf.label}
+                    </span>
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: 'rgba(237,229,207,0.3)', letterSpacing: '0.08em' }}>
+                      {(match.similarityScore * 100).toFixed(1)}% similarity
+                    </span>
+                  </div>
+                  {match.foundImage?.pageUrl && (
+                    <a
+                      href={match.foundImage.pageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: '#8fc832', textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '340px', marginBottom: '8px', letterSpacing: '0.05em' }}
+                    >
+                      ↗ {match.foundImage.pageUrl}
+                    </a>
+                  )}
+                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: 'rgba(237,229,207,0.22)', letterSpacing: '0.08em' }}>
+                    Found {new Date(match.createdAt).toLocaleDateString()}
+                  </span>
+                </div>
 
-                    {match.status === 'confirmed' && (
-                      <button onClick={() => setTakedownModal({ matchId: match.id })}
-                        className="bg-primary-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium hover:bg-primary-700">
-                        Request takedown
+                {/* Actions */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flexShrink: 0, alignItems: 'flex-end' }}>
+                  {match.status === 'pending_review' && (
+                    <>
+                      <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.3)', marginBottom: '4px', textAlign: 'right' }}>
+                        Is this you?
+                      </p>
+                      <button
+                        onClick={() => handleConfirm(match.id)}
+                        disabled={actionLoading === match.id}
+                        style={{ background: '#d96858', color: '#ede5cf', fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', padding: '9px 16px', border: 'none', cursor: actionLoading === match.id ? 'not-allowed' : 'pointer', opacity: actionLoading === match.id ? 0.5 : 1 }}
+                      >
+                        Yes, it's me
                       </button>
-                    )}
-
-                    {match.status === 'takedown_requested' && (
-                      <span className="text-xs text-primary-600 font-medium">Takedown requested</span>
-                    )}
-                  </div>
+                      <button
+                        onClick={() => handleReject(match.id)}
+                        disabled={actionLoading === match.id}
+                        style={{ background: 'transparent', color: 'rgba(237,229,207,0.45)', fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', padding: '9px 16px', border: '1px solid rgba(237,229,207,0.12)', cursor: actionLoading === match.id ? 'not-allowed' : 'pointer', opacity: actionLoading === match.id ? 0.5 : 1 }}
+                      >
+                        Not me
+                      </button>
+                    </>
+                  )}
+                  {match.status === 'confirmed' && (
+                    <button
+                      onClick={() => setTakedownModal({ matchId: match.id })}
+                      style={{ background: '#8fc832', color: '#0d1614', fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', padding: '9px 16px', border: 'none', cursor: 'pointer' }}
+                    >
+                      Request takedown
+                    </button>
+                  )}
+                  {match.status === 'takedown_requested' && (
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: '#b8a8cc' }}>
+                      Takedown requested
+                    </span>
+                  )}
+                  {match.status === 'rejected' && (
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.25)' }}>
+                      Dismissed
+                    </span>
+                  )}
                 </div>
               </div>
             );
@@ -159,30 +194,40 @@ export default function MatchesPage() {
         </div>
       )}
 
-      {/* Takedown type modal */}
+      {/* Takedown modal */}
       {takedownModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full">
-            <h2 className="font-bold text-lg mb-2">Request takedown</h2>
-            <p className="text-sm text-gray-600 mb-5">
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(13,22,20,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, padding: '24px' }}>
+          <div style={{ background: '#0d1614', border: '1px solid rgba(237,229,207,0.1)', padding: '40px', maxWidth: '380px', width: '100%' }}>
+            <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '28px', fontWeight: 700, color: '#ede5cf', letterSpacing: '-0.01em', marginBottom: '8px', lineHeight: 1 }}>
+              Request takedown.
+            </h2>
+            <p style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '13px', fontWeight: 300, color: 'rgba(237,229,207,0.45)', marginBottom: '28px', lineHeight: 1.65 }}>
               Choose the type of takedown. Both require admin review before we file anything.
             </p>
-            <div className="space-y-3">
-              <button onClick={() => handleTakedown(takedownModal.matchId, 'platform')}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'rgba(237,229,207,0.07)', marginBottom: '16px' }}>
+              <button
+                onClick={() => handleTakedown(takedownModal.matchId, 'platform')}
                 disabled={!!actionLoading}
-                className="w-full border rounded-xl p-4 text-left hover:bg-gray-50 disabled:opacity-50">
-                <div className="font-medium text-sm">Platform report</div>
-                <div className="text-xs text-gray-500 mt-0.5">Report directly to the platform (Reddit, Pinterest, etc.)</div>
+                style={{ background: '#0d1614', border: 'none', padding: '20px 22px', textAlign: 'left', cursor: actionLoading ? 'not-allowed' : 'pointer', opacity: actionLoading ? 0.5 : 1 }}
+              >
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, color: '#ede5cf', marginBottom: '4px' }}>Platform report</div>
+                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(237,229,207,0.35)' }}>Report directly to Reddit, Pinterest, etc.</div>
               </button>
-              <button onClick={() => handleTakedown(takedownModal.matchId, 'dmca')}
+              <button
+                onClick={() => handleTakedown(takedownModal.matchId, 'dmca')}
                 disabled={!!actionLoading}
-                className="w-full border rounded-xl p-4 text-left hover:bg-gray-50 disabled:opacity-50">
-                <div className="font-medium text-sm">DMCA notice</div>
-                <div className="text-xs text-gray-500 mt-0.5">Send a formal DMCA takedown to the site operator</div>
+                style={{ background: '#0d1614', border: 'none', padding: '20px 22px', textAlign: 'left', cursor: actionLoading ? 'not-allowed' : 'pointer', opacity: actionLoading ? 0.5 : 1 }}
+              >
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, color: '#ede5cf', marginBottom: '4px' }}>DMCA notice</div>
+                <div style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.1em', color: 'rgba(237,229,207,0.35)' }}>Send a formal notice to the site operator.</div>
               </button>
             </div>
-            <button onClick={() => setTakedownModal(null)}
-              className="mt-4 w-full text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+            <button
+              onClick={() => setTakedownModal(null)}
+              style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.3)', background: 'none', border: 'none', cursor: 'pointer', width: '100%', padding: '8px' }}
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

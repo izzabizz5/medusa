@@ -35,7 +35,7 @@ export class GenericStrategy {
 
       // Also grab any dynamically loaded <img> elements
       const dynamicImages = await page.$$eval('img[src]', (imgs) =>
-        imgs
+        (imgs as HTMLImageElement[])
           .filter((img) => img.naturalWidth > 200 && img.naturalHeight > 200)
           .map((img) => img.src),
       );

@@ -2,24 +2,25 @@
   "name": "medusa",
   "version": "1.0.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "libs/*"
-  ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "dev:backend": "npm run start:dev --workspace=apps/backend",
-    "dev:link-management": "npm run start:dev --workspace=apps/link-management-service",
-    "dev:crawling": "npm run start:dev --workspace=apps/crawling-service",
-    "dev:scanning": "npm run start:dev --workspace=apps/scanning-service",
-    "dev:matching": "npm run start:dev --workspace=apps/matching-service",
-    "dev:frontend": "npm run dev --workspace=apps/frontend",
+    "dev": "pnpm --parallel --filter @medusa/backend --filter @medusa/link-management-service --filter @medusa/crawling-service --filter @medusa/matching-service --filter @medusa/scanning-service --filter @medusa/frontend run dev",
+    "kill": "pkill -f 'next dev' 2>/dev/null; pkill -f uvicorn 2>/dev/null; pkill -f 'node.*dist/main' 2>/dev/null; echo done",
+    "dev:backend": "pnpm --filter @medusa/backend run start:dev",
+    "dev:link-management": "pnpm --filter @medusa/link-management-service run start:dev",
+    "dev:crawling": "pnpm --filter @medusa/crawling-service run start:dev",
+    "dev:scanning": "pnpm --filter @medusa/scanning-service run start:dev",
+    "dev:matching": "pnpm --filter @medusa/matching-service run start:dev",
+    "dev:frontend": "pnpm --filter @medusa/frontend run dev",
+    "build": "pnpm -r run build",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f",
-    "typeorm": "npm run typeorm --workspace=apps/backend",
-    "migration:generate": "npm run migration:generate --workspace=apps/backend",
-    "migration:run": "npm run migration:run --workspace=apps/backend"
+    "typeorm": "pnpm --filter @medusa/backend run typeorm",
+    "migration:generate": "pnpm --filter @medusa/backend run migration:generate",
+    "migration:run": "pnpm --filter @medusa/backend run migration:run"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["@nestjs/core", "bcrypt", "msgpackr-extract"]
   },
   "devDependencies": {
     "@types/node": "^22.0.0",

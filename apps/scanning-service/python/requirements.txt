@@ -1,6 +1,7 @@
 fastapi==0.111.1
 uvicorn[standard]==0.30.1
 insightface==0.7.3
+ml_dtypes>=0.4.0  # onnx 1.19+ requires float4_e2m1fn; pin above TF 2.16 constraint
 onnxruntime==1.18.1
 # Once we get GPU switch to this line:
 # onnxruntime-gpu==1.18.1

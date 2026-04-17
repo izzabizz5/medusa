@@ -30,9 +30,17 @@ export class PythonBridgeService implements OnModuleInit, OnModuleDestroy {
 
   async embedImage(storageKey?: string, imageUrl?: string): Promise<FaceEmbeddingResult> {
     try {
+      // When running locally (no real S3), pass a fallback URL so the Python
+      // sidecar can fetch the file from the backend's static file server if
+      // the S3 download fails.
+      const backendUrl = this.config.get('BACKEND_URL', '');
+      const fallbackUrl = !imageUrl && storageKey && backendUrl
+        ? `${backendUrl}/uploads/${storageKey}`
+        : imageUrl;
+
       const response = await axios.post(
         `${this.bridgeUrl}/embed`,
-        { storage_key: storageKey, image_url: imageUrl },
+        { storage_key: storageKey, image_url: fallbackUrl },
         { timeout: 60000 },
       );
       const data = response.data;

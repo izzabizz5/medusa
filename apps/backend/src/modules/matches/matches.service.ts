@@ -80,7 +80,7 @@ export class MatchesService {
   ): Promise<TakedownRequest> {
     const match = await this.matchRepo.findOne({
       where: { id: matchId, userId },
-      relations: ['foundImage'],
+      relations: ['foundImage', 'foundImage.targetUrl'],
     });
     if (!match) throw new NotFoundException('Match not found');
     if (match.status !== MatchStatus.CONFIRMED) {
@@ -94,7 +94,7 @@ export class MatchesService {
       matchId,
       userId,
       type,
-      platform: match.foundImage?.targetUrlId,
+      platform: match.foundImage?.targetUrl?.platform,
       status: TakedownStatus.PENDING_ADMIN_REVIEW,
     });
     await this.takedownRepo.save(takedown);

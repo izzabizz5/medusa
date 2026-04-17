@@ -15,6 +15,11 @@ export enum Platform {
   ATHLETE_SPECIFIC = 'athlete_specific',
 }
 
+export enum MlLabel {
+  POSITIVE = 'positive',
+  NEGATIVE = 'negative',
+}
+
 @Entity('target_urls')
 export class TargetUrl {
   @PrimaryGeneratedColumn('uuid')
@@ -41,6 +46,20 @@ export class TargetUrl {
   @Column({ name: 'added_by', nullable: true })
   @Index()
   addedBy: string;
+
+  // ML classifier fields
+  @Column({ name: 'ml_score', type: 'float', nullable: true })
+  mlScore: number | null;
+
+  @Column({ name: 'ml_label', type: 'varchar', nullable: true })
+  mlLabel: MlLabel | null;
+
+  @Column({ name: 'auto_discovered', default: false })
+  autoDiscovered: boolean;
+
+  /** Manual admin priority: 1 (low) – 5 (highest). Null = unranked. */
+  @Column({ name: 'priority', type: 'smallint', nullable: true, default: null })
+  priority: number | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

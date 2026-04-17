@@ -1,7 +1,12 @@
 'use client';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { getUser, AuthUser } from '@/lib/auth';
 
 export default function HomePage() {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  useEffect(() => { setUser(getUser()); }, []);
+
   return (
     <div style={{ position: 'relative', minHeight: '100vh', overflowX: 'hidden', backgroundColor: '#0d1614', color: '#ede5cf' }}>
 
@@ -53,12 +58,27 @@ export default function HomePage() {
           med<span style={{ color: '#8fc832', fontStyle: 'italic' }}>usa</span>
         </span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '36px' }}>
-          <Link href="/auth/login" style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.45)', textDecoration: 'none', transition: 'color 0.15s' }}>
-            Log in
-          </Link>
-          <Link href="/auth/register" style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#0d1614', background: '#8fc832', padding: '10px 20px', textDecoration: 'none', display: 'inline-block' }}>
-            Get started →
-          </Link>
+          {user ? (
+            <>
+              <Link href="/dashboard" style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.45)', textDecoration: 'none' }}>
+                Dashboard
+              </Link>
+              <Link href="/dashboard" title={user.email} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '34px', height: '34px', background: '#8fc832', textDecoration: 'none', flexShrink: 0 }}>
+                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '11px', fontWeight: 700, color: '#0d1614', letterSpacing: 0, lineHeight: 1 }}>
+                  {(user.fullName || user.email).charAt(0).toUpperCase()}
+                </span>
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link href="/auth/login" style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.45)', textDecoration: 'none', transition: 'color 0.15s' }}>
+                Log in
+              </Link>
+              <Link href="/auth/register" style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#0d1614', background: '#8fc832', padding: '10px 20px', textDecoration: 'none', display: 'inline-block' }}>
+                Get started →
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 

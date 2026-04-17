@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BullModule } from '@nestjs/bullmq';
 import { TargetUrlsModule } from './modules/target-urls/target-urls.module';
 import { SchedulerModule } from './modules/scheduler/scheduler.module';
+import { UrlDiscoveryModule } from './modules/url-discovery/url-discovery.module';
 import { TargetUrl } from './entities/target-url.entity';
 
 @Module({
@@ -33,6 +34,7 @@ import { TargetUrl } from './entities/target-url.entity';
 
     TargetUrlsModule,
     SchedulerModule,
+    UrlDiscoveryModule,
   ],
 })
 export class AppModule {}

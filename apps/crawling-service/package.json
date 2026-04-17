@@ -6,6 +6,7 @@
     "build": "nest build crawling-service",
     "start": "node dist/apps/crawling-service/main",
     "start:dev": "nest start crawling-service --watch",
+    "dev": "nest start crawling-service --watch",
     "playwright:install": "npx playwright install chromium --with-deps"
   },
   "dependencies": {
@@ -23,7 +24,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.20",
-    "@medusa/shared": "*"
+    "@medusa/shared": "workspace:*"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.5",

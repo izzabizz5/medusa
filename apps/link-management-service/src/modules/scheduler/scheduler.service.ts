@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { ConfigService } from '@nestjs/config';
 import { TargetUrlsService } from '../target-urls/target-urls.service';
 import { QUEUES, JOBS, CrawlJobPayload } from '@medusa/shared';
 
@@ -12,10 +13,13 @@ export class SchedulerService {
   constructor(
     @InjectQueue(QUEUES.CRAWL)
     private readonly crawlQueue: Queue,
+    @InjectQueue(QUEUES.DISCOVER)
+    private readonly discoverQueue: Queue,
     private readonly targetUrlsService: TargetUrlsService,
+    private readonly config: ConfigService,
   ) {}
 
-  // Every day at 1am — enqueue a crawl job for each active target URL
+  // 1am: enqueue crawl jobs for every active target URL
   @Cron('0 1 * * *')
   async scheduleDailyCrawl() {
     this.logger.log('Daily crawl scheduler running...');
@@ -39,7 +43,47 @@ export class SchedulerService {
     this.logger.log(`Enqueued ${targets.length} crawl jobs`);
   }
 
-  // Manual trigger endpoint — called via HTTP for immediate crawl
+  // 2:30am: web URL discovery from known domains + configured search terms
+  @Cron('30 2 * * *')
+  async scheduleDailyDiscovery() {
+    this.logger.log('Daily URL discovery running...');
+
+    // Auto-label URLs based on crawl outcomes before discovery
+    const labeled = await this.targetUrlsService.autoLabelFromCrawlOutcomes();
+    this.logger.log(`Auto-labeled from crawl outcomes: ${labeled.positive} positive, ${labeled.negative} negative`);
+
+    // Discover from links in existing active pages
+    await this.discoverQueue.add(
+      JOBS.DISCOVER_URLS,
+      { source: 'known_domains', value: '' },
+      { attempts: 2, removeOnComplete: { count: 30 } },
+    );
+
+    // Discover from configured search queries
+    const searchTerms = this.getDiscoverySearchTerms();
+    for (const term of searchTerms) {
+      await this.discoverQueue.add(
+        JOBS.DISCOVER_URLS,
+        { source: 'search_query', value: term },
+        { attempts: 2, removeOnComplete: { count: 30 } },
+      );
+    }
+
+    this.logger.log(`Queued discovery for known_domains + ${searchTerms.length} search terms`);
+  }
+
+  // 4am: retrain classifier with all labeled data (runs after crawl outcomes are updated)
+  @Cron('0 4 * * *')
+  async scheduleDailyRetrain() {
+    this.logger.log('Daily classifier retrain running...');
+    await this.discoverQueue.add(
+      JOBS.RETRAIN_CLASSIFIER,
+      {},
+      { priority: 5, attempts: 2, removeOnComplete: { count: 10 } },
+    );
+  }
+
+  // Manual trigger for immediate crawl
   async triggerCrawlNow(targetUrlId?: string) {
     const targets = targetUrlId
       ? [await this.targetUrlsService.findActive().then((t) => t.find((u) => u.id === targetUrlId))]
@@ -55,5 +99,13 @@ export class SchedulerService {
     }
 
     return { enqueued: targets.filter(Boolean).length };
+  }
+
+  private getDiscoverySearchTerms(): string[] {
+    const raw = this.config.get<string>('DISCOVERY_SEARCH_TERMS', '');
+    return raw
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
   }
 }

@@ -5,7 +5,8 @@
   "scripts": {
     "build": "nest build matching-service",
     "start": "node dist/apps/matching-service/main",
-    "start:dev": "nest start matching-service --watch"
+    "start:dev": "nest start matching-service --watch",
+    "dev": "nest start matching-service --watch"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.10",
@@ -20,7 +21,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.20",
-    "@medusa/shared": "*"
+    "@medusa/shared": "workspace:*"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.4.5",

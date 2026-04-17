@@ -29,9 +29,9 @@ try:
     INSIGHTFACE_MODEL = os.getenv("INSIGHTFACE_MODEL", "buffalo_l")
     face_app = FaceAnalysis(
         name=INSIGHTFACE_MODEL,
-        providers=["CUDAExecutionProvider", "CPUExecutionProvider"],
+        providers=["CPUExecutionProvider"],
     )
-    face_app.prepare(ctx_id=0, det_size=(640, 640))
+    face_app.prepare(ctx_id=-1, det_size=(640, 640))
     logger.info(f"InsightFace model '{INSIGHTFACE_MODEL}' loaded successfully")
     INSIGHTFACE_AVAILABLE = True
 except Exception as e:

@@ -4,6 +4,7 @@ export const QUEUES = {
   EMBED_REF: 'embed-ref-queue',
   MATCH: 'match-queue',
   TAKEDOWN: 'takedown-queue',
+  DISCOVER: 'discover-queue',
 } as const;
 
 export const JOBS = {
@@ -23,6 +24,10 @@ export const JOBS = {
   // takedown-queue
   FILE_PLATFORM_TAKEDOWN: 'file-platform-takedown',
   FILE_DMCA_NOTICE: 'file-dmca-notice',
+
+  // discover-queue
+  DISCOVER_URLS: 'discover-urls',
+  RETRAIN_CLASSIFIER: 'retrain-classifier',
 } as const;
 
 export const QUEUE_PRIORITIES = {

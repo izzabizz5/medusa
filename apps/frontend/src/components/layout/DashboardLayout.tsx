@@ -1,79 +1,172 @@
 'use client';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Shield, Image, Search, FileText, LogOut, Settings } from 'lucide-react';
-import { clearAuth, getUser } from '@/lib/auth';
-import clsx from 'clsx';
+import { clearAuth, getUser, getAdminUser, setAuth, AuthUser } from '@/lib/auth';
+import { adminApi } from '@/lib/api';
 
 const navItems = [
-  { href: '/dashboard', label: 'Overview', icon: Shield },
-  { href: '/dashboard/photos', label: 'My Photos', icon: Image },
-  { href: '/dashboard/matches', label: 'Matches', icon: Search },
-  { href: '/dashboard/takedowns', label: 'Takedowns', icon: FileText },
+  { href: '/dashboard', label: 'Overview', index: '01' },
+  { href: '/dashboard/photos', label: 'My Photos', index: '02' },
+  { href: '/dashboard/matches', label: 'Matches', index: '03' },
+  { href: '/dashboard/takedowns', label: 'Takedowns', index: '04' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const user = getUser();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [adminUser, setAdminUser] = useState<AuthUser | null>(null);
+  const [exitLoading, setExitLoading] = useState(false);
+
+  useEffect(() => {
+    setUser(getUser());
+    setAdminUser(getAdminUser());
+  }, []);
 
   const handleLogout = () => {
     clearAuth();
     router.push('/auth/login');
   };
 
+  const handleExitImpersonation = async () => {
+    setExitLoading(true);
+    try {
+      const res = await adminApi.exitImpersonation();
+      setAuth(res.data.user);
+      setUser(res.data.user);
+      setAdminUser(null);
+      router.push('/admin/profiles');
+    } catch {
+      setExitLoading(false);
+    }
+  };
+
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#0d1614', color: '#ede5cf' }}>
+      {/* Impersonation banner */}
+      {adminUser && (
+        <div style={{ background: 'rgba(232,152,40,0.12)', borderBottom: '1px solid rgba(232,152,40,0.25)', padding: '10px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#e89828' }}>
+              Viewing as
+            </span>
+            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '13px', fontWeight: 600, color: '#ede5cf' }}>
+              {user?.fullName || user?.email}
+            </span>
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: 'rgba(232,152,40,0.6)', letterSpacing: '0.06em' }}>
+              ({user?.email})
+            </span>
+          </div>
+          <button
+            onClick={handleExitImpersonation}
+            disabled={exitLoading}
+            style={{ background: 'transparent', color: '#e89828', fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '6px 14px', border: '1px solid rgba(232,152,40,0.35)', cursor: exitLoading ? 'not-allowed' : 'pointer', opacity: exitLoading ? 0.5 : 1 }}
+          >
+            {exitLoading ? 'Exiting...' : '↩ exit to admin'}
+          </button>
+        </div>
+      )}
+      <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r flex flex-col">
-        <div className="px-6 py-5 border-b">
-          <span className="text-lg font-bold text-primary-700">Medusa</span>
-          {user && <p className="text-xs text-gray-500 mt-0.5 truncate">{user.email}</p>}
+      <aside style={{ width: '210px', flexShrink: 0, borderRight: '1px solid rgba(237,229,207,0.07)', display: 'flex', flexDirection: 'column', background: 'rgba(10,19,16,0.95)' }}>
+        {/* Logo */}
+        <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(237,229,207,0.07)' }}>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: 700, color: '#ede5cf', letterSpacing: '-0.01em' }}>
+              med<span style={{ color: '#8fc832', fontStyle: 'italic' }}>usa</span>
+            </span>
+          </Link>
+          {user && (
+            <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.12em', color: adminUser ? 'rgba(232,152,40,0.6)' : 'rgba(237,229,207,0.28)', marginTop: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user.email}
+            </p>
+          )}
         </div>
 
-        <nav className="flex-1 px-4 py-4 space-y-1">
-          {navItems.map(({ href, label, icon: Icon }) => (
-            <Link key={href} href={href}
-              className={clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                pathname === href
-                  ? 'bg-primary-50 text-primary-700'
-                  : 'text-gray-600 hover:bg-gray-100',
-              )}>
-              <Icon className="w-4 h-4" />
-              {label}
-            </Link>
-          ))}
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: '12px 8px' }}>
+          {navItems.map(({ href, label, index }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '9px 12px',
+                  marginBottom: '1px',
+                  textDecoration: 'none',
+                  background: active ? 'rgba(143,200,50,0.08)' : 'transparent',
+                  borderLeft: `2px solid ${active ? '#8fc832' : 'transparent'}`,
+                }}
+              >
+                <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: active ? '#8fc832' : 'rgba(237,229,207,0.22)', letterSpacing: '0.08em', minWidth: '18px' }}>
+                  {index}
+                </span>
+                <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '13px', fontWeight: 500, color: active ? '#ede5cf' : 'rgba(237,229,207,0.42)' }}>
+                  {label}
+                </span>
+              </Link>
+            );
+          })}
 
           {user?.role === 'admin' && (
-            <Link href="/admin/takedowns"
-              className={clsx(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                pathname.startsWith('/admin')
-                  ? 'bg-primary-50 text-primary-700'
-                  : 'text-gray-600 hover:bg-gray-100',
-              )}>
-              <Settings className="w-4 h-4" />
-              Admin Queue
-            </Link>
+            <>
+              <div style={{ height: '1px', background: 'rgba(237,229,207,0.07)', margin: '12px 0' }} />
+              {[
+                { href: '/admin/profiles', label: 'Profiles' },
+                { href: '/admin/takedowns', label: 'Takedown Queue' },
+                { href: '/admin/urls', label: 'URL Ranking' },
+              ].map(({ href, label }) => {
+                const active = pathname.startsWith(href);
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px',
+                      padding: '9px 12px',
+                      marginBottom: '1px',
+                      textDecoration: 'none',
+                      background: active ? 'rgba(217,104,88,0.08)' : 'transparent',
+                      borderLeft: `2px solid ${active ? '#d96858' : 'transparent'}`,
+                    }}
+                  >
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: '#d96858', letterSpacing: '0.08em', minWidth: '18px', opacity: 0.8 }}>A</span>
+                    <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '13px', fontWeight: 500, color: active ? '#ede5cf' : 'rgba(237,229,207,0.42)' }}>
+                      {label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </>
           )}
         </nav>
 
-        <div className="px-4 py-4 border-t">
-          <button onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-gray-600 hover:bg-gray-100 w-full">
-            <LogOut className="w-4 h-4" />
-            Log out
+        {/* Logout */}
+        <div style={{ padding: '12px 8px', borderTop: '1px solid rgba(237,229,207,0.07)' }}>
+          <button
+            onClick={handleLogout}
+            style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '9px 12px', width: '100%', background: 'none', border: 'none', cursor: 'pointer' }}
+          >
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', color: 'rgba(237,229,207,0.22)', minWidth: '18px' }}>↩</span>
+            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '13px', color: 'rgba(237,229,207,0.35)' }}>Log out</span>
           </button>
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-5xl mx-auto p-8">
+      <main style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ maxWidth: '860px', margin: '0 auto', padding: '52px 48px' }}>
           {children}
         </div>
       </main>
+      </div>
     </div>
   );
 }

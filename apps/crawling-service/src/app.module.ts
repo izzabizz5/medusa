@@ -23,7 +23,7 @@ import { QUEUES } from '@medusa/shared';
         type: 'postgres',
         url: config.get('DATABASE_URL'),
         entities: [CrawlRun, FoundImage, TargetUrl],
-        synchronize: config.get('NODE_ENV') !== 'production',
+        synchronize: false,
       }),
     }),
 

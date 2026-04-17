@@ -9,6 +9,7 @@ import {
   ParseFilePipe,
   MaxFileSizeValidator,
   FileTypeValidator,
+  HttpCode,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../../guards/jwt-auth.guard';
@@ -45,5 +46,12 @@ export class ReferencePhotosController {
   @Get(':id/url')
   getSignedUrl(@Param('id') id: string, @CurrentUser() user: any) {
     return this.service.getSignedUrl(id, user.id);
+  }
+
+  /** Re-queue all failed photos for the current user. */
+  @Post('retry-failed')
+  @HttpCode(200)
+  retryFailed(@CurrentUser() user: any) {
+    return this.service.retryFailed(user.id);
   }
 }

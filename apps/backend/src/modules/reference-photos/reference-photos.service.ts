@@ -52,6 +52,28 @@ export class ReferencePhotosService {
     return this.repo.findOne({ where: { id, userId } });
   }
 
+  async retryFailed(userId: string): Promise<{ queued: number }> {
+    const failed = await this.repo.find({
+      where: { userId, status: ReferencePhotoStatus.FAILED },
+    });
+
+    for (const photo of failed) {
+      await this.repo.update(photo.id, { status: ReferencePhotoStatus.PROCESSING });
+      const payload: EmbedRefJobPayload = {
+        referencePhotoId: photo.id,
+        userId,
+        storageKey: photo.storageKey,
+      };
+      await this.embedRefQueue.add(JOBS.EMBED_REFERENCE_PHOTO, payload, {
+        priority: QUEUE_PRIORITIES.HIGH,
+        attempts: 3,
+        backoff: { type: 'exponential', delay: 30000 },
+      });
+    }
+
+    return { queued: failed.length };
+  }
+
   async getSignedUrl(id: string, userId: string): Promise<string> {
     const photo = await this.findOne(id, userId);
     if (!photo) return null;

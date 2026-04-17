@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { FaceEmbedding, EmbeddingSourceType } from '../../entities/face-embedding.entity';
 import { Match, MatchStatus } from '../../entities/match.entity';
 import { ReferencePhoto } from '../../entities/reference-photo.entity';
@@ -73,7 +73,7 @@ export class MatcherService {
       if (foundEmbeddings.length === 0) break;
 
       const foundImageIds = foundEmbeddings.map((e) => e.sourceId);
-      const foundImages = await this.foundImageRepo.findByIds(foundImageIds);
+      const foundImages = await this.foundImageRepo.find({ where: { id: In(foundImageIds) } });
       const foundImageMap = new Map(foundImages.map((fi) => [fi.id, fi]));
 
       this.logger.log(`Processing chunk: ${foundEmbeddings.length} found embeddings (offset ${offset})`);

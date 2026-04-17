@@ -5,9 +5,12 @@ import { BullModule } from '@nestjs/bullmq';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { BullBoardModule } from '@bull-board/nestjs';
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const BullMQAdapterCtor = BullMQAdapter as any;
 import { ExpressAdapter } from '@bull-board/express';
 
 import { AuthModule } from './modules/auth/auth.module';
+import { AdminModule } from './modules/admin/admin.module';
 import { ReferencePhotosModule } from './modules/reference-photos/reference-photos.module';
 import { MatchesModule } from './modules/matches/matches.module';
 import { TakedownsModule } from './modules/takedowns/takedowns.module';
@@ -67,11 +70,11 @@ import { QUEUES } from '@medusa/shared';
       adapter: ExpressAdapter,
     }),
     BullBoardModule.forFeature(
-      { name: QUEUES.CRAWL, adapter: BullMQAdapter },
-      { name: QUEUES.SCAN, adapter: BullMQAdapter },
-      { name: QUEUES.EMBED_REF, adapter: BullMQAdapter },
-      { name: QUEUES.MATCH, adapter: BullMQAdapter },
-      { name: QUEUES.TAKEDOWN, adapter: BullMQAdapter },
+      { name: QUEUES.CRAWL, adapter: BullMQAdapterCtor },
+      { name: QUEUES.SCAN, adapter: BullMQAdapterCtor },
+      { name: QUEUES.EMBED_REF, adapter: BullMQAdapterCtor },
+      { name: QUEUES.MATCH, adapter: BullMQAdapterCtor },
+      { name: QUEUES.TAKEDOWN, adapter: BullMQAdapterCtor },
     ),
 
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
@@ -81,6 +84,7 @@ import { QUEUES } from '@medusa/shared';
     ]),
 
     AuthModule,
+    AdminModule,
     StorageModule,
     ReferencePhotosModule,
     MatchesModule,

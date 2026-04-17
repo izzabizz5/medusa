@@ -2,7 +2,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { takedownsApi } from '@/lib/api';
-import { CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+
+const FILTERS = ['pending_admin_review', 'approved', 'filed', 'rejected'];
 
 export default function AdminTakedownsPage() {
   const [takedowns, setTakedowns] = useState<any[]>([]);
@@ -23,86 +24,150 @@ export default function AdminTakedownsPage() {
 
   const handleApprove = async (id: string) => {
     setActionLoading(id);
-    try {
-      await takedownsApi.approve(id, notes[id]);
-      await load();
-    } catch {} finally { setActionLoading(null); }
+    try { await takedownsApi.approve(id, notes[id]); await load(); } catch {} finally { setActionLoading(null); }
   };
 
   const handleReject = async (id: string) => {
     setActionLoading(id);
-    try {
-      await takedownsApi.reject(id, notes[id]);
-      await load();
-    } catch {} finally { setActionLoading(null); }
+    try { await takedownsApi.reject(id, notes[id]); await load(); } catch {} finally { setActionLoading(null); }
   };
 
   return (
     <DashboardLayout>
-      <h1 className="text-2xl font-bold mb-2">Admin — Takedown Queue</h1>
-      <p className="text-sm text-gray-500 mb-6">Review and approve takedown requests before they are filed.</p>
+      <div style={{ marginBottom: '12px' }}>
+        <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#d96858', marginBottom: '10px', opacity: 0.8 }}>
+          Admin
+        </p>
+        <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '42px', fontWeight: 700, color: '#ede5cf', letterSpacing: '-0.02em', lineHeight: 1, margin: 0 }}>
+          Takedown queue.
+        </h1>
+        <p style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '13px', fontWeight: 300, color: 'rgba(237,229,207,0.4)', marginTop: '10px' }}>
+          Review and approve requests before they are filed.
+        </p>
+      </div>
 
-      <div className="flex gap-2 mb-6">
-        {['pending_admin_review', 'approved', 'filed', 'rejected'].map((s) => (
-          <button key={s} onClick={() => setFilter(s)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium ${filter === s ? 'bg-primary-600 text-white' : 'bg-white border text-gray-600'}`}>
-            {s.replace(/_/g, ' ')}
-          </button>
-        ))}
+      {/* Filter tabs */}
+      <div style={{ display: 'flex', gap: '2px', borderBottom: '1px solid rgba(237,229,207,0.07)', marginBottom: '32px', marginTop: '32px' }}>
+        {FILTERS.map((s) => {
+          const active = filter === s;
+          return (
+            <button
+              key={s}
+              onClick={() => setFilter(s)}
+              style={{
+                fontFamily: "'IBM Plex Mono', monospace",
+                fontSize: '9px',
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: active ? '#8fc832' : 'rgba(237,229,207,0.35)',
+                background: 'none',
+                border: 'none',
+                borderBottom: `2px solid ${active ? '#8fc832' : 'transparent'}`,
+                padding: '10px 16px',
+                cursor: 'pointer',
+                marginBottom: '-1px',
+              }}
+            >
+              {s.replace(/_/g, ' ')}
+            </button>
+          );
+        })}
       </div>
 
       {loading ? (
-        <div className="text-center py-16 text-gray-400">Loading...</div>
+        <div style={{ textAlign: 'center', padding: '80px 0', fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', color: 'rgba(237,229,207,0.25)' }}>
+          Loading...
+        </div>
       ) : takedowns.length === 0 ? (
-        <div className="text-center py-16 text-gray-400">No {filter.replace(/_/g, ' ')} requests</div>
+        <div style={{ textAlign: 'center', padding: '80px 0' }}>
+          <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: '56px', opacity: 0.12, lineHeight: 1, marginBottom: '16px' }}>◇</div>
+          <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '10px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.3)' }}>
+            No {filter.replace(/_/g, ' ')} requests
+          </p>
+        </div>
       ) : (
-        <div className="space-y-4">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', background: 'rgba(237,229,207,0.07)' }}>
           {takedowns.map((td) => (
-            <div key={td.id} className="bg-white rounded-xl border p-5">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-sm font-medium capitalize">{td.type} takedown</div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-gray-400">{td.user?.email}</span>
-                  <span className="text-xs text-gray-400">{new Date(td.createdAt).toLocaleDateString()}</span>
+            <div key={td.id} style={{ background: '#0d1614', padding: '24px 28px' }}>
+              {/* Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: '14px', fontWeight: 600, color: '#ede5cf', textTransform: 'capitalize' }}>
+                  {td.type} takedown
+                </span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                  {td.user?.email && (
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: 'rgba(237,229,207,0.3)', letterSpacing: '0.08em' }}>
+                      {td.user.email}
+                    </span>
+                  )}
+                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: 'rgba(237,229,207,0.25)', letterSpacing: '0.08em' }}>
+                    {new Date(td.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
               </div>
 
-              {/* Match preview */}
+              {/* Match info */}
               {td.match?.foundImage && (
-                <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-gray-700 mb-1">Found image</p>
-                    {td.match.foundImage.pageUrl && (
-                      <a href={td.match.foundImage.pageUrl} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-xs text-primary-600 hover:underline truncate">
-                        <ExternalLink className="w-3 h-3 flex-shrink-0" />
-                        {td.match.foundImage.pageUrl}
-                      </a>
-                    )}
-                    <p className="text-xs text-gray-400 mt-1">
-                      Similarity: {(td.match.similarityScore * 100)?.toFixed(1)}%
-                    </p>
-                  </div>
+                <div style={{ background: 'rgba(237,229,207,0.03)', border: '1px solid rgba(237,229,207,0.07)', padding: '14px 18px', marginBottom: '20px' }}>
+                  <p style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(237,229,207,0.3)', marginBottom: '8px' }}>
+                    Found image
+                  </p>
+                  {td.match.foundImage.pageUrl && (
+                    <a
+                      href={td.match.foundImage.pageUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: '#8fc832', textDecoration: 'none', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '8px', letterSpacing: '0.05em' }}
+                    >
+                      ↗ {td.match.foundImage.pageUrl}
+                    </a>
+                  )}
+                  {td.match.similarityScore != null && (
+                    <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', color: 'rgba(237,229,207,0.28)', letterSpacing: '0.08em' }}>
+                      {(td.match.similarityScore * 100).toFixed(1)}% similarity
+                    </span>
+                  )}
                 </div>
               )}
 
+              {/* Admin action area */}
               {td.status === 'pending_admin_review' && (
-                <div className="space-y-3">
+                <div>
                   <textarea
-                    placeholder="Optional notes for the user..."
+                    placeholder="Optional note for the user..."
                     value={notes[td.id] || ''}
                     onChange={(e) => setNotes({ ...notes, [td.id]: e.target.value })}
-                    className="w-full border rounded-lg px-3 py-2 text-sm resize-none h-20 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    style={{
+                      width: '100%',
+                      background: 'rgba(13,22,20,0.7)',
+                      border: '1px solid rgba(237,229,207,0.1)',
+                      color: '#ede5cf',
+                      fontFamily: "'Space Grotesk', sans-serif",
+                      fontSize: '13px',
+                      padding: '12px 14px',
+                      resize: 'none',
+                      height: '72px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      marginBottom: '14px',
+                      display: 'block',
+                    }}
+                    onFocus={(e) => (e.target.style.borderColor = 'rgba(143,200,50,0.4)')}
+                    onBlur={(e) => (e.target.style.borderColor = 'rgba(237,229,207,0.1)')}
                   />
-                  <div className="flex gap-3">
-                    <button onClick={() => handleApprove(td.id)} disabled={actionLoading === td.id}
-                      className="flex items-center gap-1.5 bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 disabled:opacity-50">
-                      <CheckCircle className="w-4 h-4" />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      onClick={() => handleApprove(td.id)}
+                      disabled={actionLoading === td.id}
+                      style={{ background: '#8fc832', color: '#0d1614', fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 500, padding: '11px 20px', border: 'none', cursor: actionLoading === td.id ? 'not-allowed' : 'pointer', opacity: actionLoading === td.id ? 0.5 : 1 }}
+                    >
                       Approve & file
                     </button>
-                    <button onClick={() => handleReject(td.id)} disabled={actionLoading === td.id}
-                      className="flex items-center gap-1.5 bg-white border text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-50 disabled:opacity-50">
-                      <XCircle className="w-4 h-4" />
+                    <button
+                      onClick={() => handleReject(td.id)}
+                      disabled={actionLoading === td.id}
+                      style={{ background: 'transparent', color: 'rgba(237,229,207,0.45)', fontFamily: "'IBM Plex Mono', monospace", fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', padding: '11px 20px', border: '1px solid rgba(237,229,207,0.12)', cursor: actionLoading === td.id ? 'not-allowed' : 'pointer', opacity: actionLoading === td.id ? 0.5 : 1 }}
+                    >
                       Reject
                     </button>
                   </div>

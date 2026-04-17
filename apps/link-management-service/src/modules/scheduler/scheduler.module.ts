@@ -9,6 +9,7 @@ import { QUEUES } from '@medusa/shared';
   imports: [
     ScheduleModule.forRoot(),
     BullModule.registerQueue({ name: QUEUES.CRAWL }),
+    BullModule.registerQueue({ name: QUEUES.DISCOVER }),
     TargetUrlsModule,
   ],
   providers: [SchedulerService],

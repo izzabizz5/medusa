@@ -19,7 +19,7 @@ import { QUEUES } from '@medusa/shared';
         type: 'postgres',
         url: config.get('DATABASE_URL'),
         entities: [FaceEmbedding, FoundImage, ReferencePhoto],
-        synchronize: config.get('NODE_ENV') !== 'production',
+        synchronize: false,
       }),
     }),
 

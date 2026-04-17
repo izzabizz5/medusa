@@ -10,9 +10,9 @@ import {
   S3Client,
   PutObjectCommand,
 } from '@aws-sdk/client-s3';
-import { CrawlRun, CrawlRunStatus } from '../../entities/crawl-run.entity';
-import { FoundImage, ScanStatus } from '../../entities/found-image.entity';
-import { TargetUrl } from '../../entities/target-url.entity';
+import { CrawlRun, CrawlRunStatus } from '../../../entities/crawl-run.entity';
+import { FoundImage, ScanStatus } from '../../../entities/found-image.entity';
+import { TargetUrl } from '../../../entities/target-url.entity';
 import { RedditStrategy } from '../strategies/reddit.strategy';
 import { GenericStrategy } from '../strategies/generic.strategy';
 import { DedupService } from '../../dedup/dedup.service';
